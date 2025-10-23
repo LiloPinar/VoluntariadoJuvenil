@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { useLocale } from '@/i18n/LocaleContext';
 import {
   Collapsible,
   CollapsibleContent,
@@ -27,12 +28,12 @@ interface SidebarProps {
 }
 
 const menuItems = [
-  { icon: Home, label: "Inicio", shortcut: "Alt+H" },
-  { icon: Calendar, label: "Proyectos", shortcut: "Alt+P" },
-  { icon: Award, label: "Mis Horas", shortcut: "Alt+M" },
-  { icon: Users, label: "Comunidad", shortcut: "Alt+C" },
-  { icon: Settings, label: "Configuración", shortcut: "Alt+S" },
-  { icon: HelpCircle, label: "Ayuda", shortcut: "Alt+A" },
+  { icon: Home, label: "inicio", shortcut: "Alt+H" },
+  { icon: Calendar, label: "proyectos", shortcut: "Alt+P" },
+  { icon: Award, label: "mis_horas", shortcut: "Alt+M" },
+  { icon: Users, label: "comunidad", shortcut: "Alt+C" },
+  { icon: Settings, label: "configuracion", shortcut: "Alt+S" },
+  { icon: HelpCircle, label: "ayuda", shortcut: "Alt+A" },
 ];
 
 const accessibilityItems = [
@@ -44,6 +45,8 @@ const accessibilityItems = [
 
 export const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
   const [isAccessibilityOpen, setIsAccessibilityOpen] = useState(false);
+
+  const { t } = useLocale();
 
   return (
     <>
@@ -58,7 +61,8 @@ export const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
       {/* Sidebar */}
       <aside
         className={cn(
-          "fixed left-0 top-16 z-40 h-[calc(100vh-4rem)] w-64 border-r border-sidebar-border bg-sidebar transition-transform duration-300 md:sticky md:translate-x-0",
+          // show only on small screens; hide on md+ because header menu replaces it
+          "fixed left-0 top-16 z-40 h-[calc(100vh-4rem)] w-64 border-r border-sidebar-border bg-sidebar transition-transform duration-300 md:hidden",
           isOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
@@ -70,7 +74,7 @@ export const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
               className="w-full justify-start gap-3 text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
             >
               <item.icon className="h-5 w-5" />
-              <span className="flex-1 text-left">{item.label}</span>
+              <span className="flex-1 text-left">{t(item.label)}</span>
               <kbd className="hidden rounded bg-muted px-1.5 py-0.5 text-xs opacity-60 lg:inline-block">
                 {item.shortcut}
               </kbd>
@@ -89,7 +93,7 @@ export const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
                 className="w-full justify-start gap-3 text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
               >
                 <Bell className="h-5 w-5" />
-                <span className="flex-1 text-left">Accesibilidad</span>
+                <span className="flex-1 text-left">{t('accesibilidad')}</span>
                 <ChevronRight
                   className={cn(
                     "h-4 w-4 transition-transform",
@@ -107,7 +111,7 @@ export const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
                   className="w-full justify-start gap-3 text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
                 >
                   <item.icon className="h-4 w-4" />
-                  <span className="text-sm">{item.label}</span>
+                  <span className="text-sm">{t(item.label)}</span>
                 </Button>
               ))}
             </CollapsibleContent>

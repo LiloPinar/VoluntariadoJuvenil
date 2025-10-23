@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { Header } from "@/components/Header";
 import { Sidebar } from "@/components/Sidebar";
 import { ProjectCard } from "@/components/ProjectCard";
@@ -10,9 +10,11 @@ import heroImage from "@/assets/hero-volunteering.jpg";
 import projectEnvironmental from "@/assets/project-environmental.jpg";
 import projectSocial from "@/assets/project-social.jpg";
 import projectEducational from "@/assets/project-educational.jpg";
+import { useLocale } from "@/i18n/LocaleContext";
 
 const Index = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
 
   const projects = [
     {
@@ -95,6 +97,8 @@ const Index = () => {
     },
   ];
 
+  const { t } = useLocale();
+
   return (
     <div className="flex min-h-screen flex-col">
       <Header
@@ -117,26 +121,21 @@ const Index = () => {
             <div className="container relative flex h-full items-center px-4">
               <div className="max-w-2xl space-y-6">
                 <h1 className="text-4xl font-bold leading-tight md:text-5xl lg:text-6xl">
-                  ¡Bienvenido a{" "}
-                  <span className="bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent">
-                    VoluntariaJoven
-                  </span>
-                  !
+                  {t('home_title')}
                 </h1>
                 <p className="text-lg text-muted-foreground md:text-xl">
-                  Conecta con proyectos que transforman vidas. Registra tus horas
-                  de servicio comunitario y marca la diferencia en tu comunidad.
+                  {t('home_sub')}
                 </p>
                 <div className="flex flex-wrap gap-4">
                   <Button
                     size="lg"
                     className="bg-gradient-to-r from-primary to-secondary hover:opacity-90"
                   >
-                    Explorar Proyectos
+                    {t('explorar_proyectos')}
                     <ArrowRight className="ml-2 h-5 w-5" />
                   </Button>
                   <Button size="lg" variant="outline">
-                    Ver Mis Horas
+                    {t('ver_mis_horas')}
                   </Button>
                 </div>
               </div>
@@ -168,12 +167,8 @@ const Index = () => {
           <section className="py-16">
             <div className="container px-4">
               <div className="mb-8">
-                <h2 className="mb-2 text-3xl font-bold">
-                  Proyectos Destacados
-                </h2>
-                <p className="text-muted-foreground">
-                  Descubre oportunidades para hacer la diferencia en tu comunidad
-                </p>
+                <h2 className="mb-2 text-3xl font-bold">{t('proyectos_destacados')}</h2>
+                <p className="text-muted-foreground">{t('home_sub')}</p>
               </div>
 
               <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -184,7 +179,7 @@ const Index = () => {
 
               <div className="mt-8 text-center">
                 <Button variant="outline" size="lg">
-                  Ver Todos los Proyectos
+                  {t('ver_todos_proyectos')}
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
               </div>
@@ -194,11 +189,9 @@ const Index = () => {
           {/* Help Section */}
           <section className="border-t border-border bg-muted/30 py-12">
             <div className="container px-4 text-center">
-              <h3 className="mb-4 text-2xl font-bold">¿Necesitas Ayuda?</h3>
-              <p className="mb-6 text-muted-foreground">
-                Nuestro equipo está aquí para asistirte en cualquier momento
-              </p>
-              <Button variant="outline">Contactar Soporte</Button>
+              <h3 className="mb-4 text-2xl font-bold">{t('necesitas_ayuda')}</h3>
+              <p className="mb-6 text-muted-foreground">{t('home_sub')}</p>
+              <Button variant="outline">{t('contactar_soporte')}</Button>
             </div>
           </section>
         </main>

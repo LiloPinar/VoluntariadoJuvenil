@@ -1,73 +1,87 @@
-# Welcome to your Lovable project
+# Action Agenda Youth (VoluntariaJoven)
 
-## Project info
+Proyecto frontend construido con Vite + React + TypeScript y Tailwind CSS.
 
-**URL**: https://lovable.dev/projects/7b3c5428-1172-4ee7-a73f-6c1239b927ac
+## Ejecutar localmente
 
-## How can I edit this code?
+Prerequisitos:
+- Node.js (16+ recomendado, preferible LTS 18/20).
+- npm (incluido con Node.js).
 
-There are several ways of editing your application.
+Pasos:
 
-**Use Lovable**
+```powershell
+cd C:\Users\Lilibeth\Desktop\voluntariado_app\action-agenda-youth
+npm install
+# Action Agenda Youth (VoluntariaJoven)
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/7b3c5428-1172-4ee7-a73f-6c1239b927ac) and start prompting.
+Este repositorio contiene la aplicación frontend construida con Vite, React y TypeScript, y estilizada con Tailwind CSS. Está preparada como base para una interfaz de usuario moderna que usa primitives accesibles (Radix) y utilidades para formularios, validación y cacheo de datos.
 
-Changes made via Lovable will be committed automatically to this repo.
+---
 
-**Use your preferred IDE**
+## Resumen
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+- Framework: React 18
+- Bundle / Dev server: Vite
+# VoluntariaJoven — Plataforma de Voluntariado Juvenil
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+Una SPA frontend construida con Vite + React + TypeScript y estilo con Tailwind CSS. Esta guía rápida explica la estructura del proyecto, cómo ejecutar y notas útiles para desarrolladores.
 
-Follow these steps:
+---
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+## Resumen técnico
+- Stack: React 18, TypeScript, Vite
+- Estilos: Tailwind CSS
+- Enrutamiento: react-router-dom
+- Fetching/cache: @tanstack/react-query
+- Formularios y validación: react-hook-form + zod
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+---
 
-# Step 3: Install the necessary dependencies.
-npm i
+## Estructura del proyecto (resumen)
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+- `index.html` — HTML de entrada que monta la app.
+- `package.json` — scripts y dependencias.
+- `vite.config.ts` — configuración de Vite (alias `@`, puerto, plugins).
+- `src/` — código fuente:
+	- `main.tsx` — punto de entrada que monta React y Providers.
+	- `App.tsx` — enrutador y layout global.
+	- `pages/` — vistas y rutas (Index, Login, Register, Proyectos, MisHoras, etc.).
+	- `components/` — componentes reutilizables y UI primitives.
+		- `ui/` — wrappers y primitives (algunos stubs para mantener compatibilidad tras limpieza).
+	- `hooks/` — hooks personalizados (ej. `useGlobalShortcuts`).
+	- `i18n/` — contexto y traducciones.
+	- `lib/` — utilidades y helpers.
+	- `assets/` — imágenes y recursos importables.
+---
+
+## Comandos principales (PowerShell)
+
+Instalar dependencias (recomendado usar `npm ci` en CI):
+
+```powershell
+cd C:\Users\Lilibeth\Desktop\voluntariado_app\action-agenda-youth
+npm ci
+```
+
+Arrancar servidor de desarrollo (Vite):
+
+```powershell
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+Construir para producción y previsualizar:
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+```powershell
+npm run build
+npm run preview
+```
 
-**Use GitHub Codespaces**
+Lint / typecheck (si están definidos en package.json):
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+```powershell
+npm run lint
+npm run typecheck
+```
 
-## What technologies are used for this project?
-
-This project is built with:
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/7b3c5428-1172-4ee7-a73f-6c1239b927ac) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+---
