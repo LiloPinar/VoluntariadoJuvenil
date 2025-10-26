@@ -43,6 +43,21 @@ export const validateFullName = (value: string, t: (key: string) => string): str
 };
 
 /**
+ * Valida nombre o apellido (solo letras, mínimo 2 caracteres)
+ */
+export const validateName = (value: string, t: (key: string) => string): string => {
+  if (!value.trim()) return t('field_required');
+  
+  // Solo letras (con acentos y espacios)
+  const nameRegex = /^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]+$/;
+  if (!nameRegex.test(value)) return t('invalid_name');
+  
+  if (value.trim().length < 2) return 'Debe tener al menos 2 caracteres';
+  
+  return '';
+};
+
+/**
  * Valida que la confirmación de contraseña coincida
  */
 export const validateConfirmPassword = (

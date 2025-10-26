@@ -8,67 +8,30 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { LogIn, Mail, Lock, Eye, EyeOff, AlertCircle, CheckCircle2 } from 'lucide-react';
-import { NavLink, useNavigate } from 'react-router-dom';
+import { LogIn, Mail, Lock, Eye, EyeOff, AlertCircle, CheckCircle2, ShieldAlert } from 'lucide-react';
+import { NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
-import { validateEmail, validatePassword } from '@/validations';
+import { useAuth } from '@/hooks/useAuth';
+import { useLoginForm } from '@/hooks/useLoginForm';
+import { useAuthContext } from '@/contexts/AuthContext';
 
 const Login = () => {
   const { t } = useLocale();
   const navigate = useNavigate();
+  const location = useLocation();
   const { toast } = useToast();
+  const { login: authContextLogin } = useAuthContext();
+  const { rememberedEmail, login: authLogin } = useAuth();
+  const { formData, errors, touched, handleChange, handleBlur, validateAll } = useLoginForm(rememberedEmail);
 
-  // Estados del formulario
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [rememberMe, setRememberMe] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-
-  // Estados de validación
-  const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
-  const [touched, setTouched] = useState<{ email?: boolean; password?: boolean }>({});
-
-  // Manejo de cambios en los campos
-  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setEmail(value);
-    if (touched.email) {
-      setErrors(prev => ({ ...prev, email: validateEmail(value, t) }));
-    }
-  };
-
-  const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setPassword(value);
-    if (touched.password) {
-      setErrors(prev => ({ ...prev, password: validatePassword(value, t) }));
-    }
-  };
-
-  // Manejo de blur (cuando el usuario sale del campo)
-  const handleBlur = (field: 'email' | 'password') => {
-    setTouched(prev => ({ ...prev, [field]: true }));
-    if (field === 'email') {
-      setErrors(prev => ({ ...prev, email: validateEmail(email, t) }));
-    } else {
-      setErrors(prev => ({ ...prev, password: validatePassword(password, t) }));
-    }
-  };
 
   // Manejo del envío del formulario
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Validar todos los campos
-    const emailError = validateEmail(email, t);
-    const passwordError = validatePassword(password, t);
-
-    setErrors({ email: emailError, password: passwordError });
-    setTouched({ email: true, password: true });
-
-    // Si hay errores, no continuar
-    if (emailError || passwordError) {
+    if (!validateAll(t)) {
       toast({
         title: "Error en el formulario",
         description: "Por favor, corrige los errores antes de continuar.",
@@ -77,25 +40,65 @@ const Login = () => {
       return;
     }
 
-    // Simular inicio de sesión
+    // Intentar iniciar sesión con el hook useAuth
     setIsLoading(true);
 
     try {
-      // Aquí iría la lógica de autenticación real
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      const result = await authLogin(formData.email, formData.password, formData.rememberMe);
 
-      toast({
-        title: t('login_success'),
-        description: `${t('home_title')}`,
-        className: "bg-green-50 border-green-200",
-      });
-
-      // Redirigir al inicio
-      setTimeout(() => navigate('/'), 500);
+      if (result.success) {
+        // Login exitoso - Guardar en AuthContext
+        const loginSuccess = await authContextLogin(formData.email, formData.password);
+        
+        if (loginSuccess) {
+          toast({
+            title: t('login_success'),
+            description: `${t('home_title')}`,
+            className: "bg-green-50 dark:bg-green-950 border-green-200 dark:border-green-800 dark:text-green-50",
+          });
+          
+          // Redirigir a la página de retorno o al inicio
+          const returnTo = (location.state as { returnTo?: string })?.returnTo || '/';
+          setTimeout(() => navigate(returnTo), 500);
+        }
+      } else {
+        if (result.isLocked) {
+          toast({
+            title: "🔒 Cuenta bloqueada temporalmente",
+            description: result.message,
+            variant: "destructive",
+            duration: 6000,
+          });
+        } else if (result.userNotFound) {
+          // Usuario no existe - mensaje sin contador
+          toast({
+            title: "📧 Correo no encontrado",
+            description: result.message,
+            variant: "destructive",
+            duration: 5000,
+          });
+        } else if (result.wrongPassword) {
+          // Contraseña incorrecta - mensaje con contador
+          toast({
+            title: "🔑 Contraseña incorrecta",
+            description: result.message,
+            variant: "destructive",
+            duration: 5000,
+          });
+        } else {
+          // Caso genérico
+          toast({
+            title: "❌ Error al iniciar sesión",
+            description: result.message,
+            variant: "destructive",
+            duration: 5000,
+          });
+        }
+      }
     } catch (error) {
       toast({
         title: t('login_error'),
-        description: "Por favor, verifica tus credenciales e intenta nuevamente.",
+        description: "Ocurrió un error inesperado. Por favor, intenta nuevamente.",
         variant: "destructive",
       });
     } finally {
@@ -115,31 +118,33 @@ const Login = () => {
     <div className="min-h-screen flex flex-col">
       <Header currentPage={t('inicio_sesion')} />
       
-      <main className="flex-1 flex items-center justify-center bg-gradient-to-br from-muted/30 via-background to-muted/20 px-4 py-12">
-        <div className="w-full max-w-md space-y-6">
+      <main className="flex-1 flex items-center justify-center bg-gradient-to-br from-muted/30 via-background to-muted/20 px-4 sm:px-6 py-8 sm:py-12">
+        <div className="w-full max-w-md space-y-4 sm:space-y-6">
           
           {/* Bienvenida */}
           <div className="text-center space-y-2">
-            <div className="inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-primary via-secondary to-accent shadow-lg mb-4">
-              <LogIn className="h-8 w-8 text-white" />
+            <div className="inline-flex h-12 w-12 sm:h-16 sm:w-16 items-center justify-center rounded-xl sm:rounded-2xl bg-gradient-to-br from-primary via-secondary to-accent shadow-lg mb-3 sm:mb-4">
+              <LogIn className="h-6 w-6 sm:h-8 sm:w-8 text-white" />
             </div>
-            <h1 className="text-3xl font-bold tracking-tight">{t('login_title')}</h1>
-            <p className="text-muted-foreground">{t('login_subtitle')}</p>
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">{t('login_title')}</h1>
+            <p className="text-sm sm:text-base text-muted-foreground">{t('login_subtitle')}</p>
           </div>
 
           {/* Formulario */}
           <Card className="border-2 shadow-xl">
-            <CardHeader className="space-y-1 pb-4">
-              <CardTitle className="text-xl font-semibold text-center">
+            <CardHeader className="space-y-1 pb-3 sm:pb-4">
+              <CardTitle className="text-lg sm:text-xl font-semibold text-center">
                 {t('inicio_sesion')}
               </CardTitle>
-              <CardDescription className="text-center">
+              <CardDescription className="text-center text-xs sm:text-sm">
                 {t('home_sub')}
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <form onSubmit={handleSubmit} className="space-y-5">
+              <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5">
                 
+                {/* Alerta de bloqueo - REMOVIDA: No debe aparecer aquí porque el bloqueo se verifica por email específico al enviar */}
+
                 {/* Campo Email */}
                 <div className="space-y-2">
                   <Label htmlFor="email" className="text-sm font-medium">
@@ -151,16 +156,16 @@ const Login = () => {
                       id="email"
                       type="email"
                       placeholder={t('email_placeholder')}
-                      value={email}
-                      onChange={handleEmailChange}
-                      onBlur={() => handleBlur('email')}
+                      value={formData.email}
+                      onChange={(e) => handleChange('email', e.target.value, t)}
+                      onBlur={() => handleBlur('email', t)}
                       onKeyDown={(e) => handleKeyPress(e, () => document.getElementById('password')?.focus())}
                       className={`pl-10 h-11 ${errors.email && touched.email ? 'border-destructive focus-visible:ring-destructive' : ''}`}
                       aria-invalid={!!(errors.email && touched.email)}
                       aria-describedby={errors.email && touched.email ? 'email-error' : undefined}
                       disabled={isLoading}
                     />
-                    {!errors.email && touched.email && email && (
+                    {!errors.email && touched.email && formData.email && (
                       <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-green-500" />
                     )}
                   </div>
@@ -183,9 +188,9 @@ const Login = () => {
                       id="password"
                       type={showPassword ? 'text' : 'password'}
                       placeholder={t('password_placeholder')}
-                      value={password}
-                      onChange={handlePasswordChange}
-                      onBlur={() => handleBlur('password')}
+                      value={formData.password}
+                      onChange={(e) => handleChange('password', e.target.value, t)}
+                      onBlur={() => handleBlur('password', t)}
                       className={`pl-10 pr-10 h-11 ${errors.password && touched.password ? 'border-destructive focus-visible:ring-destructive' : ''}`}
                       aria-invalid={!!(errors.password && touched.password)}
                       aria-describedby={errors.password && touched.password ? 'password-error' : undefined}
@@ -220,8 +225,8 @@ const Login = () => {
                   <div className="flex items-center space-x-2">
                     <Checkbox
                       id="remember"
-                      checked={rememberMe}
-                      onCheckedChange={(checked) => setRememberMe(checked as boolean)}
+                      checked={formData.rememberMe}
+                      onCheckedChange={(checked) => handleChange('rememberMe', checked as boolean, t)}
                       disabled={isLoading}
                     />
                     <label
@@ -231,19 +236,19 @@ const Login = () => {
                       {t('remember_me')}
                     </label>
                   </div>
-                  <a
-                    href="#"
+                  <NavLink
+                    to="/forgot-password"
                     className="text-sm font-medium text-primary hover:underline focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded px-1"
                     tabIndex={isLoading ? -1 : 0}
                   >
                     {t('forgot_password')}
-                  </a>
+                  </NavLink>
                 </div>
 
                 {/* Botón de envío */}
                 <Button
                   type="submit"
-                  className="w-full h-11 bg-gradient-to-r from-primary to-secondary hover:opacity-90 shadow-md text-base font-semibold"
+                  className="w-full h-10 sm:h-11 bg-gradient-to-r from-primary to-secondary hover:opacity-90 shadow-md text-sm sm:text-base font-semibold"
                   disabled={isLoading}
                 >
                   {isLoading ? (
@@ -253,7 +258,7 @@ const Login = () => {
                     </>
                   ) : (
                     <>
-                      <LogIn className="mr-2 h-5 w-5" />
+                      <LogIn className="mr-2 h-4 w-4 sm:h-5 sm:w-5" />
                       {t('login_button')}
                     </>
                   )}

@@ -9,147 +9,28 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { UserPlus, Mail, Lock, Eye, EyeOff, AlertCircle, CheckCircle2, User } from 'lucide-react';
-import { NavLink, useNavigate } from 'react-router-dom';
+import { NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
-import { 
-  validateEmail, 
-  validatePassword, 
-  validateFullName, 
-  validateConfirmPassword, 
-  validateTerms 
-} from '@/validations';
-
-interface FormErrors {
-  fullName?: string;
-  email?: string;
-  password?: string;
-  confirmPassword?: string;
-  terms?: string;
-}
-
-interface FormTouched {
-  fullName?: boolean;
-  email?: boolean;
-  password?: boolean;
-  confirmPassword?: boolean;
-  terms?: boolean;
-}
+import { useRegisterForm } from '@/hooks/useRegisterForm';
+import { useAuthContext } from '@/contexts/AuthContext';
 
 const Register = () => {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const navigate = useNavigate();
+  const location = useLocation();
   const { toast } = useToast();
+  const { register: authRegister } = useAuthContext();
+  const { formData, errors, touched, handleChange, handleBlur, validateAll } = useRegisterForm();
 
-  // Estados del formulario
-  const [fullName, setFullName] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [acceptTerms, setAcceptTerms] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-
-  // Estados de validación
-  const [errors, setErrors] = useState<FormErrors>({});
-  const [touched, setTouched] = useState<FormTouched>({});
-
-  // Manejo de cambios en los campos
-  const handleFullNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setFullName(value);
-    if (touched.fullName) {
-      setErrors(prev => ({ ...prev, fullName: validateFullName(value, t) }));
-    }
-  };
-
-  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setEmail(value);
-    if (touched.email) {
-      setErrors(prev => ({ ...prev, email: validateEmail(value, t) }));
-    }
-  };
-
-  const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setPassword(value);
-    if (touched.password) {
-      setErrors(prev => ({ ...prev, password: validatePassword(value, t) }));
-    }
-    // Re-validar confirmación si ya fue tocada
-    if (touched.confirmPassword && confirmPassword) {
-      setErrors(prev => ({ ...prev, confirmPassword: validateConfirmPassword(value, confirmPassword, t) }));
-    }
-  };
-
-  const handleConfirmPasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setConfirmPassword(value);
-    if (touched.confirmPassword) {
-      setErrors(prev => ({ ...prev, confirmPassword: validateConfirmPassword(password, value, t) }));
-    }
-  };
-
-  const handleTermsChange = (checked: boolean) => {
-    setAcceptTerms(checked);
-    if (touched.terms) {
-      setErrors(prev => ({ ...prev, terms: validateTerms(checked, t) }));
-    }
-  };
-
-  // Manejo de blur
-  const handleBlur = (field: keyof FormTouched) => {
-    setTouched(prev => ({ ...prev, [field]: true }));
-    
-    switch(field) {
-      case 'fullName':
-        setErrors(prev => ({ ...prev, fullName: validateFullName(fullName, t) }));
-        break;
-      case 'email':
-        setErrors(prev => ({ ...prev, email: validateEmail(email, t) }));
-        break;
-      case 'password':
-        setErrors(prev => ({ ...prev, password: validatePassword(password, t) }));
-        break;
-      case 'confirmPassword':
-        setErrors(prev => ({ ...prev, confirmPassword: validateConfirmPassword(password, confirmPassword, t) }));
-        break;
-      case 'terms':
-        setErrors(prev => ({ ...prev, terms: validateTerms(acceptTerms, t) }));
-        break;
-    }
-  };
 
   // Manejo del envío del formulario
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Validar todos los campos
-    const fullNameError = validateFullName(fullName, t);
-    const emailError = validateEmail(email, t);
-    const passwordError = validatePassword(password, t);
-    const confirmPasswordError = validateConfirmPassword(password, confirmPassword, t);
-    const termsError = validateTerms(acceptTerms, t);
-
-    setErrors({
-      fullName: fullNameError,
-      email: emailError,
-      password: passwordError,
-      confirmPassword: confirmPasswordError,
-      terms: termsError,
-    });
-
-    setTouched({
-      fullName: true,
-      email: true,
-      password: true,
-      confirmPassword: true,
-      terms: true,
-    });
-
-    // Si hay errores, no continuar
-    if (fullNameError || emailError || passwordError || confirmPasswordError || termsError) {
+    if (!validateAll(t)) {
       toast({
         title: "Error en el formulario",
         description: "Por favor, corrige los errores antes de continuar.",
@@ -158,21 +39,29 @@ const Register = () => {
       return;
     }
 
-    // Simular registro
+    // Registrar usuario
     setIsLoading(true);
 
     try {
-      // Aquí iría la lógica de registro real
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      const registerSuccess = await authRegister(formData.firstName, formData.lastName, formData.email, formData.password);
 
-      toast({
-        title: t('register_success'),
-        description: "¡Bienvenido a la comunidad de VoluntariaJoven!",
-        className: "bg-green-50 border-green-200",
-      });
-
-      // Redirigir al login
-      setTimeout(() => navigate('/login'), 1000);
+      if (registerSuccess) {
+        toast({
+          title: t('register_success'),
+          description: "¡Bienvenido a la comunidad de VoluntariaJoven!",
+          className: "bg-green-50 dark:bg-green-950 border-green-200 dark:border-green-800 dark:text-green-50",
+        });
+        
+        // Redirigir a la página de retorno o al inicio (ya está logueado automáticamente)
+        const returnTo = (location.state as { returnTo?: string })?.returnTo || '/';
+        setTimeout(() => navigate(returnTo), 1000);
+      } else {
+        toast({
+          title: "Email ya registrado",
+          description: "Este correo electrónico ya está en uso. Intenta iniciar sesión.",
+          variant: "destructive",
+        });
+      }
     } catch (error) {
       toast({
         title: t('register_error'),
@@ -196,59 +85,91 @@ const Register = () => {
     <div className="min-h-screen flex flex-col">
       <Header currentPage={t('registrate')} />
       
-      <main className="flex-1 flex items-center justify-center bg-gradient-to-br from-muted/30 via-background to-muted/20 px-4 py-12">
-        <div className="w-full max-w-md space-y-6">
+      <main className="flex-1 flex items-center justify-center bg-gradient-to-br from-muted/30 via-background to-muted/20 px-4 sm:px-6 py-8 sm:py-12">
+        <div className="w-full max-w-md space-y-4 sm:space-y-6">
           
           {/* Bienvenida */}
           <div className="text-center space-y-2">
-            <div className="inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-primary via-secondary to-accent shadow-lg mb-4">
-              <UserPlus className="h-8 w-8 text-white" />
+            <div className="inline-flex h-12 w-12 sm:h-16 sm:w-16 items-center justify-center rounded-xl sm:rounded-2xl bg-gradient-to-br from-primary via-secondary to-accent shadow-lg mb-3 sm:mb-4">
+              <UserPlus className="h-6 w-6 sm:h-8 sm:w-8 text-white" />
             </div>
-            <h1 className="text-3xl font-bold tracking-tight">{t('register_title')}</h1>
-            <p className="text-muted-foreground">{t('register_subtitle')}</p>
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">{t('register_title')}</h1>
+            <p className="text-sm sm:text-base text-muted-foreground">{t('register_subtitle')}</p>
           </div>
 
           {/* Formulario */}
           <Card className="border-2 shadow-xl">
-            <CardHeader className="space-y-1 pb-4">
-              <CardTitle className="text-xl font-semibold text-center">
+            <CardHeader className="space-y-1 pb-3 sm:pb-4">
+              <CardTitle className="text-lg sm:text-xl font-semibold text-center">
                 {t('registrate')}
               </CardTitle>
-              <CardDescription className="text-center">
+              <CardDescription className="text-center text-xs sm:text-sm">
                 {t('home_sub')}
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <form onSubmit={handleSubmit} className="space-y-4">
+              <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4">
                 
-                {/* Campo Nombre Completo */}
+                {/* Campo Nombre */}
                 <div className="space-y-2">
-                  <Label htmlFor="fullName" className="text-sm font-medium">
-                    {t('full_name')} <span className="text-destructive">*</span>
+                  <Label htmlFor="firstName" className="text-sm font-medium">
+                    {t('first_name')} <span className="text-destructive">*</span>
                   </Label>
                   <div className="relative">
                     <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
-                      id="fullName"
+                      id="firstName"
                       type="text"
-                      placeholder={t('full_name_placeholder')}
-                      value={fullName}
-                      onChange={handleFullNameChange}
-                      onBlur={() => handleBlur('fullName')}
-                      onKeyDown={(e) => handleKeyPress(e, () => document.getElementById('email')?.focus())}
-                      className={`pl-10 h-11 ${errors.fullName && touched.fullName ? 'border-destructive focus-visible:ring-destructive' : ''}`}
-                      aria-invalid={!!(errors.fullName && touched.fullName)}
-                      aria-describedby={errors.fullName && touched.fullName ? 'fullName-error' : undefined}
+                      placeholder={t('first_name_placeholder')}
+                      value={formData.firstName}
+                      onChange={(e) => handleChange('firstName', e.target.value, t)}
+                      onBlur={() => handleBlur('firstName', t)}
+                      onKeyDown={(e) => handleKeyPress(e, () => document.getElementById('lastName')?.focus())}
+                      className={`pl-10 h-11 ${errors.firstName && touched.firstName ? 'border-destructive focus-visible:ring-destructive' : ''}`}
+                      aria-invalid={!!(errors.firstName && touched.firstName)}
+                      aria-describedby={errors.firstName && touched.firstName ? 'firstName-error' : undefined}
                       disabled={isLoading}
                     />
-                    {!errors.fullName && touched.fullName && fullName && (
+                    {!errors.firstName && touched.firstName && formData.firstName && (
                       <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-green-500" />
                     )}
                   </div>
-                  {errors.fullName && touched.fullName && (
-                    <p id="fullName-error" className="text-sm text-destructive flex items-center gap-1.5 mt-1">
+                  {errors.firstName && touched.firstName && (
+                    <p id="firstName-error" className="text-sm text-destructive flex items-center gap-1.5 mt-1">
                       <AlertCircle className="h-3.5 w-3.5" />
-                      {errors.fullName}
+                      {errors.firstName}
+                    </p>
+                  )}
+                </div>
+
+                {/* Campo Apellido */}
+                <div className="space-y-2">
+                  <Label htmlFor="lastName" className="text-sm font-medium">
+                    {t('last_name')} <span className="text-destructive">*</span>
+                  </Label>
+                  <div className="relative">
+                    <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="lastName"
+                      type="text"
+                      placeholder={t('last_name_placeholder')}
+                      value={formData.lastName}
+                      onChange={(e) => handleChange('lastName', e.target.value, t)}
+                      onBlur={() => handleBlur('lastName', t)}
+                      onKeyDown={(e) => handleKeyPress(e, () => document.getElementById('email')?.focus())}
+                      className={`pl-10 h-11 ${errors.lastName && touched.lastName ? 'border-destructive focus-visible:ring-destructive' : ''}`}
+                      aria-invalid={!!(errors.lastName && touched.lastName)}
+                      aria-describedby={errors.lastName && touched.lastName ? 'lastName-error' : undefined}
+                      disabled={isLoading}
+                    />
+                    {!errors.lastName && touched.lastName && formData.lastName && (
+                      <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-green-500" />
+                    )}
+                  </div>
+                  {errors.lastName && touched.lastName && (
+                    <p id="lastName-error" className="text-sm text-destructive flex items-center gap-1.5 mt-1">
+                      <AlertCircle className="h-3.5 w-3.5" />
+                      {errors.lastName}
                     </p>
                   )}
                 </div>
@@ -264,16 +185,16 @@ const Register = () => {
                       id="email"
                       type="email"
                       placeholder={t('email_placeholder')}
-                      value={email}
-                      onChange={handleEmailChange}
-                      onBlur={() => handleBlur('email')}
+                      value={formData.email}
+                      onChange={(e) => handleChange('email', e.target.value, t)}
+                      onBlur={() => handleBlur('email', t)}
                       onKeyDown={(e) => handleKeyPress(e, () => document.getElementById('password')?.focus())}
                       className={`pl-10 h-11 ${errors.email && touched.email ? 'border-destructive focus-visible:ring-destructive' : ''}`}
                       aria-invalid={!!(errors.email && touched.email)}
                       aria-describedby={errors.email && touched.email ? 'email-error' : undefined}
                       disabled={isLoading}
                     />
-                    {!errors.email && touched.email && email && (
+                    {!errors.email && touched.email && formData.email && (
                       <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-green-500" />
                     )}
                   </div>
@@ -296,9 +217,9 @@ const Register = () => {
                       id="password"
                       type={showPassword ? 'text' : 'password'}
                       placeholder={t('password_placeholder')}
-                      value={password}
-                      onChange={handlePasswordChange}
-                      onBlur={() => handleBlur('password')}
+                      value={formData.password}
+                      onChange={(e) => handleChange('password', e.target.value, t)}
+                      onBlur={() => handleBlur('password', t)}
                       onKeyDown={(e) => handleKeyPress(e, () => document.getElementById('confirmPassword')?.focus())}
                       className={`pl-10 pr-10 h-11 ${errors.password && touched.password ? 'border-destructive focus-visible:ring-destructive' : ''}`}
                       aria-invalid={!!(errors.password && touched.password)}
@@ -340,9 +261,9 @@ const Register = () => {
                       id="confirmPassword"
                       type={showConfirmPassword ? 'text' : 'password'}
                       placeholder={t('confirm_password_placeholder')}
-                      value={confirmPassword}
-                      onChange={handleConfirmPasswordChange}
-                      onBlur={() => handleBlur('confirmPassword')}
+                      value={formData.confirmPassword}
+                      onChange={(e) => handleChange('confirmPassword', e.target.value, t)}
+                      onBlur={() => handleBlur('confirmPassword', t)}
                       className={`pl-10 pr-10 h-11 ${errors.confirmPassword && touched.confirmPassword ? 'border-destructive focus-visible:ring-destructive' : ''}`}
                       aria-invalid={!!(errors.confirmPassword && touched.confirmPassword)}
                       aria-describedby={errors.confirmPassword && touched.confirmPassword ? 'confirmPassword-error' : undefined}
@@ -363,7 +284,7 @@ const Register = () => {
                         <Eye className="h-4 w-4 text-muted-foreground" />
                       )}
                     </Button>
-                    {!errors.confirmPassword && touched.confirmPassword && confirmPassword && password === confirmPassword && (
+                    {!errors.confirmPassword && touched.confirmPassword && formData.confirmPassword && formData.password === formData.confirmPassword && (
                       <CheckCircle2 className="absolute right-10 top-1/2 -translate-y-1/2 h-4 w-4 text-green-500" />
                     )}
                   </div>
@@ -380,9 +301,9 @@ const Register = () => {
                   <div className="flex items-start space-x-2">
                     <Checkbox
                       id="terms"
-                      checked={acceptTerms}
-                      onCheckedChange={handleTermsChange}
-                      onBlur={() => handleBlur('terms')}
+                      checked={formData.acceptTerms}
+                      onCheckedChange={(checked) => handleChange('acceptTerms', checked as boolean, t)}
+                      onBlur={() => handleBlur('terms', t)}
                       className={`mt-0.5 ${errors.terms && touched.terms ? 'border-destructive' : ''}`}
                       aria-invalid={!!(errors.terms && touched.terms)}
                       aria-describedby={errors.terms && touched.terms ? 'terms-error' : undefined}
@@ -393,13 +314,13 @@ const Register = () => {
                       className="text-sm leading-tight cursor-pointer"
                     >
                       {t('accept_terms')}{' '}
-                      <a href="#" className="font-medium text-primary hover:underline">
+                      <NavLink to="/terms" className="font-medium text-primary hover:underline" target="_blank">
                         {t('terms_and_conditions')}
-                      </a>{' '}
+                      </NavLink>{' '}
                       y{' '}
-                      <a href="#" className="font-medium text-primary hover:underline">
+                      <NavLink to="/privacy" className="font-medium text-primary hover:underline" target="_blank">
                         {t('privacy_policy')}
-                      </a>{' '}
+                      </NavLink>{' '}
                       <span className="text-destructive">*</span>
                     </label>
                   </div>
@@ -414,7 +335,7 @@ const Register = () => {
                 {/* Botón de envío */}
                 <Button
                   type="submit"
-                  className="w-full h-11 bg-gradient-to-r from-primary to-secondary hover:opacity-90 shadow-md text-base font-semibold mt-6"
+                  className="w-full h-10 sm:h-11 bg-gradient-to-r from-primary to-secondary hover:opacity-90 shadow-md text-sm sm:text-base font-semibold mt-4 sm:mt-6"
                   disabled={isLoading}
                 >
                   {isLoading ? (
@@ -424,7 +345,7 @@ const Register = () => {
                     </>
                   ) : (
                     <>
-                      <UserPlus className="mr-2 h-5 w-5" />
+                      <UserPlus className="mr-2 h-4 w-4 sm:h-5 sm:w-5" />
                       {t('register_button')}
                     </>
                   )}

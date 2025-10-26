@@ -7,77 +7,14 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ArrowRight, TrendingUp, Users, Award } from "lucide-react";
 import heroImage from "@/assets/hero-volunteering.jpg";
-import projectEnvironmental from "@/assets/project-environmental.jpg";
-import projectSocial from "@/assets/project-social.jpg";
-import projectEducational from "@/assets/project-educational.jpg";
 import { useLocale } from "@/i18n/LocaleContext";
+import { allProjects } from "@/data/projects";
 
 const Index = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
-
-  const projects = [
-    {
-      title: "Reforestación Comunitaria",
-      description:
-        "Ayuda a plantar árboles y restaurar áreas verdes en nuestra comunidad local.",
-      category: "environmental" as const,
-      hours: 4,
-      participants: 25,
-      location: "Parque Central, Manta",
-      image: projectEnvironmental,
-    },
-    {
-      title: "Apoyo a Personas Mayores",
-      description:
-        "Acompaña y asiste a adultos mayores en el centro comunitario.",
-      category: "social" as const,
-      hours: 3,
-      participants: 15,
-      location: "Centro Comunitario San José",
-      image: projectSocial,
-    },
-    {
-      title: "Tutoría Académica",
-      description:
-        "Enseña y apoya a niños de primaria en sus estudios después de clases.",
-      category: "educational" as const,
-      hours: 2,
-      participants: 30,
-      location: "Escuela La Esperanza",
-      image: projectEducational,
-    },
-    {
-      title: "Limpieza de Playas",
-      description:
-        "Únete a la jornada mensual de limpieza y conservación de nuestras playas.",
-      category: "environmental" as const,
-      hours: 3,
-      participants: 40,
-      location: "Playa Murciélago",
-      image: projectEnvironmental,
-    },
-    {
-      title: "Alfabetización Digital",
-      description:
-        "Enseña habilidades tecnológicas básicas a personas de la tercera edad.",
-      category: "educational" as const,
-      hours: 2,
-      participants: 12,
-      location: "Biblioteca Municipal",
-      image: projectEducational,
-    },
-    {
-      title: "Banco de Alimentos",
-      description:
-        "Colabora en la clasificación y distribución de alimentos para familias necesitadas.",
-      category: "social" as const,
-      hours: 4,
-      participants: 20,
-      location: "Banco de Alimentos Manabí",
-      image: projectSocial,
-    },
-  ];
+  // Tomar los primeros 6 proyectos para mostrar en la página de inicio
+  const featuredProjects = allProjects.slice(0, 6);
 
   const stats = [
     {
@@ -111,30 +48,30 @@ const Index = () => {
 
         <main className="flex-1">
           {/* Hero Section */}
-          <section className="relative h-[500px] overflow-hidden">
+          <section className="relative h-[400px] sm:h-[500px] lg:h-[600px] overflow-hidden">
             <img
               src={heroImage}
               alt="Jóvenes voluntarios trabajando juntos"
               className="absolute inset-0 h-full w-full object-cover"
             />
             <div className="absolute inset-0 bg-gradient-to-r from-background/95 via-background/80 to-transparent" />
-            <div className="container relative flex h-full items-center px-4">
-              <div className="max-w-2xl space-y-6">
-                <h1 className="text-4xl font-bold leading-tight md:text-5xl lg:text-6xl">
+            <div className="container relative flex h-full items-center px-4 sm:px-6 lg:px-8">
+              <div className="max-w-2xl space-y-4 sm:space-y-6">
+                <h1 className="text-3xl font-bold leading-tight sm:text-4xl md:text-5xl lg:text-6xl">
                   {t('home_title')}
                 </h1>
-                <p className="text-lg text-muted-foreground md:text-xl">
+                <p className="text-base sm:text-lg text-muted-foreground md:text-xl">
                   {t('home_sub')}
                 </p>
-                <div className="flex flex-wrap gap-4">
+                <div className="flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-4">
                   <Button
                     size="lg"
-                    className="bg-gradient-to-r from-primary to-secondary hover:opacity-90"
+                    className="bg-gradient-to-r from-primary to-secondary hover:opacity-90 w-full sm:w-auto"
                   >
                     {t('explorar_proyectos')}
                     <ArrowRight className="ml-2 h-5 w-5" />
                   </Button>
-                  <Button size="lg" variant="outline">
+                  <Button size="lg" variant="outline" className="w-full sm:w-auto">
                     {t('ver_mis_horas')}
                   </Button>
                 </div>
@@ -143,17 +80,17 @@ const Index = () => {
           </section>
 
           {/* Stats Section */}
-          <section className="border-b border-border bg-muted/30 py-12">
-            <div className="container px-4">
-              <div className="grid gap-6 md:grid-cols-3">
+          <section className="border-b border-border bg-muted/30 py-8 sm:py-12">
+            <div className="container px-4 sm:px-6 lg:px-8">
+              <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-3">
                 {stats.map((stat) => (
                   <Card key={stat.label} className="text-center">
-                    <CardContent className="pt-6">
-                      <div className="mb-3 inline-flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-                        <stat.icon className="h-6 w-6 text-primary" />
+                    <CardContent className="pt-4 sm:pt-6">
+                      <div className="mb-2 sm:mb-3 inline-flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-full bg-primary/10">
+                        <stat.icon className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
                       </div>
-                      <div className="text-3xl font-bold">{stat.value}</div>
-                      <div className="text-sm text-muted-foreground">
+                      <div className="text-2xl sm:text-3xl font-bold">{stat.value}</div>
+                      <div className="text-xs sm:text-sm text-muted-foreground">
                         {stat.label}
                       </div>
                     </CardContent>
@@ -164,21 +101,21 @@ const Index = () => {
           </section>
 
           {/* Projects Section */}
-          <section className="py-16">
-            <div className="container px-4">
-              <div className="mb-8">
-                <h2 className="mb-2 text-3xl font-bold">{t('proyectos_destacados')}</h2>
-                <p className="text-muted-foreground">{t('home_sub')}</p>
+          <section className="py-12 sm:py-16">
+            <div className="container px-4 sm:px-6 lg:px-8">
+              <div className="mb-6 sm:mb-8">
+                <h2 className="mb-2 text-2xl sm:text-3xl font-bold">{t('proyectos_destacados')}</h2>
+                <p className="text-sm sm:text-base text-muted-foreground">{t('home_sub')}</p>
               </div>
 
-              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                {projects.map((project, index) => (
-                  <ProjectCard key={index} {...project} />
+              <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+                {featuredProjects.map((project) => (
+                  <ProjectCard key={project.id} {...project} />
                 ))}
               </div>
 
-              <div className="mt-8 text-center">
-                <Button variant="outline" size="lg">
+              <div className="mt-6 sm:mt-8 text-center">
+                <Button variant="outline" size="lg" className="w-full sm:w-auto">
                   {t('ver_todos_proyectos')}
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
@@ -187,11 +124,11 @@ const Index = () => {
           </section>
 
           {/* Help Section */}
-          <section className="border-t border-border bg-muted/30 py-12">
-            <div className="container px-4 text-center">
-              <h3 className="mb-4 text-2xl font-bold">{t('necesitas_ayuda')}</h3>
-              <p className="mb-6 text-muted-foreground">{t('home_sub')}</p>
-              <Button variant="outline">{t('contactar_soporte')}</Button>
+          <section className="border-t border-border bg-muted/30 py-8 sm:py-12">
+            <div className="container px-4 sm:px-6 lg:px-8 text-center">
+              <h3 className="mb-3 sm:mb-4 text-xl sm:text-2xl font-bold">{t('necesitas_ayuda')}</h3>
+              <p className="mb-4 sm:mb-6 text-sm sm:text-base text-muted-foreground">{t('home_sub')}</p>
+              <Button variant="outline" className="w-full sm:w-auto">{t('contactar_soporte')}</Button>
             </div>
           </section>
         </main>

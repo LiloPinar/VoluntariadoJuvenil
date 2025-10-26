@@ -12,6 +12,7 @@ import {
   Contrast,
   Type,
   Bell,
+  BookmarkCheck,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -30,6 +31,7 @@ interface SidebarProps {
 const menuItems = [
   { icon: Home, label: "inicio", shortcut: "Alt+H" },
   { icon: Calendar, label: "proyectos", shortcut: "Alt+P" },
+  { icon: BookmarkCheck, label: "mis_proyectos", shortcut: "Alt+Y" },
   { icon: Award, label: "mis_horas", shortcut: "Alt+M" },
   { icon: Users, label: "comunidad", shortcut: "Alt+C" },
   { icon: Settings, label: "configuracion", shortcut: "Alt+S" },

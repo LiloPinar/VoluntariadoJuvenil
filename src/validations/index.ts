@@ -9,6 +9,7 @@ export {
   validateEmail,
   validatePassword,
   validateFullName,
+  validateName,
   validateConfirmPassword,
   validateTerms,
 } from './authValidations';
