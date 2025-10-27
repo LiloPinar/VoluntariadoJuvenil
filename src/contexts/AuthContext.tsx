@@ -6,6 +6,7 @@ interface User {
   lastName: string;
   fullName: string; // Calculado: firstName + lastName
   email: string;
+  role: 'volunteer' | 'admin'; // Rol del usuario
   avatar?: string;
   phone?: string;
   location?: string;
@@ -20,6 +21,7 @@ interface User {
 interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
+  isLoading: boolean; // Estado de carga para evitar redirecciones prematuras
   login: (email: string, password: string) => Promise<boolean>;
   register: (firstName: string, lastName: string, email: string, password: string) => Promise<boolean>;
   logout: () => void;
@@ -28,29 +30,74 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// Emails de administradores
+const ADMIN_EMAILS = [
+  'admin@voluntariajoven.com', 
+  'admin@gmail.com', 
+  'saul@admin.com',
+  // Agrega tu email aquí para tener acceso de administrador
+  // 'tuemail@example.com'
+];
+
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(true); // Estado de carga inicial
 
-  // Cargar usuario desde localStorage al montar
+  // Función helper para determinar el rol
+  const getUserRole = (email: string): 'volunteer' | 'admin' => {
+    return ADMIN_EMAILS.includes(email.toLowerCase()) ? 'admin' : 'volunteer';
+  };
+
+  // Cargar usuario desde localStorage al montar y crear admin por defecto si no existe
   useEffect(() => {
-    // Migración: Actualizar usuarios antiguos con fullName a firstName/lastName
-    const users = JSON.parse(localStorage.getItem('users') || '[]');
+    // Migración: Actualizar usuarios antiguos con fullName a firstName/lastName y rol
+    let users = JSON.parse(localStorage.getItem('users') || '[]');
     let needsUpdate = false;
 
+    // Crear cuenta admin por defecto si no existe
+    const defaultAdminEmail = 'admin@gmail.com';
+    const defaultAdminPassword = 'admin123';
+    if (!users.some((u: any) => u.email === defaultAdminEmail)) {
+      const adminUser = {
+        id: Date.now().toString(),
+        firstName: 'Admin',
+        lastName: 'Principal',
+        fullName: 'Admin Principal',
+        email: defaultAdminEmail,
+        password: defaultAdminPassword,
+        role: 'admin',
+        avatar: `https://ui-avatars.com/api/?name=Admin+Principal&background=3b82f6&color=fff`,
+        phone: '',
+        location: '',
+        birthDate: '',
+        joinDate: new Date().toISOString().split('T')[0],
+        completedProjects: 0,
+        volunteerHours: 0,
+        recognitions: 0,
+      };
+      users.push(adminUser);
+      localStorage.setItem('users', JSON.stringify(users));
+    }
+
     const migratedUsers = users.map((u: any) => {
+      let updated = { ...u };
       if (!u.firstName || !u.lastName) {
         needsUpdate = true;
         const nameParts = (u.fullName || 'Usuario Anónimo').split(' ');
-        return {
-          ...u,
+        updated = {
+          ...updated,
           firstName: nameParts[0] || 'Usuario',
           lastName: nameParts.slice(1).join(' ') || 'Anónimo',
           fullName: u.fullName || `${nameParts[0]} ${nameParts.slice(1).join(' ')}`,
         };
       }
-      return u;
+      // Asignar rol si no existe
+      if (!u.role) {
+        needsUpdate = true;
+        updated.role = getUserRole(u.email);
+      }
+      return updated;
     });
-
     if (needsUpdate) {
       localStorage.setItem('users', JSON.stringify(migratedUsers));
     }
@@ -59,22 +106,34 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const savedUser = localStorage.getItem('currentUser');
     if (savedUser) {
       const parsedUser = JSON.parse(savedUser);
-      
       // Migrar usuario actual si es necesario
+      let migratedCurrentUser = { ...parsedUser };
+      let needsMigration = false;
       if (!parsedUser.firstName || !parsedUser.lastName) {
+        needsMigration = true;
         const nameParts = (parsedUser.fullName || 'Usuario Anónimo').split(' ');
-        const migratedCurrentUser = {
-          ...parsedUser,
+        migratedCurrentUser = {
+          ...migratedCurrentUser,
           firstName: nameParts[0] || 'Usuario',
           lastName: nameParts.slice(1).join(' ') || 'Anónimo',
           fullName: parsedUser.fullName || `${nameParts[0]} ${nameParts.slice(1).join(' ')}`,
         };
+      }
+      // Asignar rol si no existe
+      if (!parsedUser.role) {
+        needsMigration = true;
+        migratedCurrentUser.role = getUserRole(parsedUser.email);
+      }
+      if (needsMigration) {
         setUser(migratedCurrentUser);
         localStorage.setItem('currentUser', JSON.stringify(migratedCurrentUser));
       } else {
         setUser(parsedUser);
       }
     }
+    
+    // Marcar como cargado después de verificar localStorage
+    setIsLoading(false);
   }, []);
 
   const login = async (email: string, password: string): Promise<boolean> => {
@@ -87,8 +146,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     
     if (foundUser) {
       const { password: _, ...userWithoutPassword } = foundUser;
-      setUser(userWithoutPassword);
-      localStorage.setItem('currentUser', JSON.stringify(userWithoutPassword));
+      // Asegurar que tenga rol
+      const userWithRole = {
+        ...userWithoutPassword,
+        role: userWithoutPassword.role || getUserRole(email)
+      };
+      setUser(userWithRole);
+      localStorage.setItem('currentUser', JSON.stringify(userWithRole));
       return true;
     }
     
@@ -108,6 +172,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
     
     const fullName = `${firstName} ${lastName}`;
+    const role = getUserRole(email);
     
     // Crear nuevo usuario
     const newUser = {
@@ -117,6 +182,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       fullName,
       email,
       password, // En producción: hashear con bcrypt
+      role, // Asignar rol
       avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(fullName)}&background=3b82f6&color=fff`,
       phone: '',
       location: '',
@@ -172,6 +238,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     <AuthContext.Provider value={{
       user,
       isAuthenticated: !!user,
+      isLoading,
       login,
       register,
       logout,

@@ -1,4 +1,4 @@
-import { Clock, Users, MapPin, Calendar, CheckCircle2, LogIn } from "lucide-react";
+import { Clock, Users, MapPin, Calendar, CheckCircle2, LogIn, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -38,6 +38,7 @@ interface ProjectCardProps {
   date?: string;
   status?: "available" | "in-progress" | "completed";
   enrolled?: boolean;
+  isOpenForEnrollment?: boolean; // Nuevo campo para controlar inscripciones
 }
 
 const categoryColors = {
@@ -64,6 +65,7 @@ export const ProjectCard = ({
   date,
   status = "available",
   enrolled = false,
+  isOpenForEnrollment = true, // Por defecto, las inscripciones están abiertas
 }: ProjectCardProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const [showAuthDialog, setShowAuthDialog] = useState(false);
@@ -91,9 +93,19 @@ export const ProjectCard = ({
       return;
     }
 
-    // Si está inscrito, cancelar inscripción (sin validar perfil)
+    // Si está inscrito, cancelar inscripción (sin validar perfil ni inscripciones)
     if (isEnrolled) {
       handleUnenroll();
+      return;
+    }
+
+    // Validar que las inscripciones estén abiertas
+    if (!isOpenForEnrollment) {
+      toast({
+        title: 'Inscripciones cerradas',
+        description: 'Este proyecto ya no acepta nuevas inscripciones en este momento.',
+        variant: 'destructive',
+      });
       return;
     }
 
@@ -184,6 +196,14 @@ export const ProjectCard = ({
               {enrollmentStatus === 'rejected' && 'Rechazado'}
             </Badge>
           )}
+          {!isOpenForEnrollment && !isEnrolled && (
+            <Badge
+              className="absolute left-3 bottom-3 sm:left-4 sm:bottom-4 text-xs bg-orange-500 text-white"
+            >
+              <Lock className="h-3 w-3 mr-1" />
+              Inscripciones Cerradas
+            </Badge>
+          )}
         </div>
         <CardHeader className="pb-3">
           <CardTitle className="line-clamp-1 text-base sm:text-lg">{title}</CardTitle>
@@ -218,7 +238,12 @@ export const ProjectCard = ({
               e.stopPropagation(); // Prevenir que el clic active la navegación
               handleEnrollClick();
             }}
-            disabled={isLoading || status === "completed" || enrollmentStatus === 'pending'}
+            disabled={
+              isLoading || 
+              status === "completed" || 
+              enrollmentStatus === 'pending' ||
+              (!isEnrolled && !isOpenForEnrollment)
+            }
             variant={isEnrolled && isAuthenticated ? "outline" : "default"}
           >
             {isLoading ? (
@@ -227,6 +252,8 @@ export const ProjectCard = ({
               "Solicitud Pendiente"
             ) : enrollmentStatus === 'rejected' ? (
               "Solicitud Rechazada"
+            ) : !isOpenForEnrollment && !isEnrolled ? (
+              "Inscripciones Cerradas"
             ) : isEnrolled && isAuthenticated ? (
               "Cancelar inscripción"
             ) : (
@@ -271,7 +298,7 @@ export const ProjectCard = ({
             <AlertDialogAction 
               onClick={() => {
                 setShowProfileIncompleteDialog(false);
-                navigate('/configuracion');
+                navigate('/profile');
               }}
               className="w-full sm:w-auto"
             >

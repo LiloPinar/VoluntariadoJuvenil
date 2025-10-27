@@ -2,6 +2,17 @@ import projectEnvironmental from "@/assets/project-environmental.jpg";
 import projectSocial from "@/assets/project-social.jpg";
 import projectEducational from "@/assets/project-educational.jpg";
 
+export interface Activity {
+  id: string;
+  name: string;
+  description: string;
+  hours: number;
+  completedBy: string[]; // IDs de usuarios que completaron esta actividad
+  validatedBy?: string; // ID del admin que validó
+  validatedAt?: string; // Fecha de validación
+  isCompleted: boolean;
+}
+
 export interface Project {
   id: number;
   title: string;
@@ -13,6 +24,8 @@ export interface Project {
   image: string;
   date: string;
   status: "available" | "in-progress" | "completed";
+  isOpenForEnrollment?: boolean; // Campo para controlar si acepta inscripciones
+  activities?: Activity[]; // Actividades/objetivos del proyecto
 }
 
 export const allProjects: Project[] = [
@@ -27,6 +40,33 @@ export const allProjects: Project[] = [
     image: projectEnvironmental,
     date: "2025-11-01",
     status: "available",
+    isOpenForEnrollment: true,
+    activities: [
+      {
+        id: "act-1-1",
+        name: "Preparación del terreno",
+        description: "Limpieza y preparación del área a reforestar",
+        hours: 1,
+        completedBy: [],
+        isCompleted: false,
+      },
+      {
+        id: "act-1-2",
+        name: "Plantación de árboles",
+        description: "Siembra de especies nativas",
+        hours: 2,
+        completedBy: [],
+        isCompleted: false,
+      },
+      {
+        id: "act-1-3",
+        name: "Riego y mantenimiento",
+        description: "Cuidado inicial de los árboles plantados",
+        hours: 1,
+        completedBy: [],
+        isCompleted: false,
+      },
+    ],
   },
   {
     id: 2,
@@ -39,6 +79,7 @@ export const allProjects: Project[] = [
     image: projectSocial,
     date: "2025-10-28",
     status: "available",
+    isOpenForEnrollment: true,
   },
   {
     id: 3,
@@ -51,6 +92,7 @@ export const allProjects: Project[] = [
     image: projectEducational,
     date: "2025-11-05",
     status: "available",
+    isOpenForEnrollment: true,
   },
   {
     id: 4,
@@ -63,6 +105,7 @@ export const allProjects: Project[] = [
     image: projectEnvironmental,
     date: "2025-11-10",
     status: "available",
+    isOpenForEnrollment: true,
   },
   {
     id: 5,
@@ -75,6 +118,7 @@ export const allProjects: Project[] = [
     image: projectEducational,
     date: "2025-10-30",
     status: "available",
+    isOpenForEnrollment: true,
   },
   {
     id: 6,
@@ -87,6 +131,7 @@ export const allProjects: Project[] = [
     image: projectSocial,
     date: "2025-11-03",
     status: "available",
+    isOpenForEnrollment: true,
   },
   {
     id: 7,
@@ -99,6 +144,7 @@ export const allProjects: Project[] = [
     image: projectSocial,
     date: "2025-11-12",
     status: "available",
+    isOpenForEnrollment: true,
   },
   {
     id: 8,
@@ -111,5 +157,6 @@ export const allProjects: Project[] = [
     image: projectEnvironmental,
     date: "2025-11-15",
     status: "available",
+    isOpenForEnrollment: true,
   },
 ];

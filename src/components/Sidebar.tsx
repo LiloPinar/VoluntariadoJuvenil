@@ -17,6 +17,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useLocale } from '@/i18n/LocaleContext';
+import { useAuthContext } from '@/contexts/AuthContext';
 import {
   Collapsible,
   CollapsibleContent,
@@ -49,6 +50,16 @@ export const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
   const [isAccessibilityOpen, setIsAccessibilityOpen] = useState(false);
 
   const { t } = useLocale();
+  const { isAuthenticated } = useAuthContext();
+
+  // Filtrar menuItems según autenticación
+  const visibleMenuItems = menuItems.filter(item => {
+    // Si no está autenticado, ocultar "mis_proyectos" y "mis_horas"
+    if (!isAuthenticated && (item.label === "mis_proyectos" || item.label === "mis_horas")) {
+      return false;
+    }
+    return true;
+  });
 
   return (
     <>
@@ -69,7 +80,7 @@ export const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
         )}
       >
         <nav className="flex h-full flex-col gap-2 overflow-y-auto p-4">
-          {menuItems.map((item) => (
+          {visibleMenuItems.map((item) => (
             <Button
               key={item.label}
               variant="ghost"

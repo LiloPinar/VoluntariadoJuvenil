@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { Header } from "@/components/Header";
 import { useLocale } from '@/i18n/LocaleContext';
 import { Sidebar } from "@/components/Sidebar";
@@ -32,6 +32,11 @@ const MisProyectos = () => {
   const { isAuthenticated, user } = useAuthContext();
   const { getUserEnrolledProjects, enrolledProjects } = useProjectContext();
   const navigate = useNavigate();
+
+  // Scroll al top cuando se carga la página
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
 
   // Obtener IDs de proyectos inscritos del usuario actual
   const enrolledProjectIds = useMemo(() => {

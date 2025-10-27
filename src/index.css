@@ -145,4 +145,70 @@ All colors MUST be HSL.
   body {
     @apply bg-background text-foreground;
   }
+
+  /* Alto Contraste */
+  .high-contrast {
+    --primary: 215 100% 50%;
+    --secondary: 145 70% 45%;
+    --accent: 25 100% 50%;
+    --border: 215 30% 40%;
+    --muted: 215 30% 25%;
+    --muted-foreground: 215 20% 80%;
+  }
+
+  .dark.high-contrast {
+    --background: 0 0% 0%;
+    --foreground: 0 0% 100%;
+    --card: 0 0% 5%;
+    --border: 0 0% 40%;
+    --primary: 215 100% 60%;
+    --secondary: 145 80% 55%;
+    --accent: 25 100% 60%;
+  }
+
+  /* Texto Ampliado */
+  .large-text {
+    font-size: 112.5% !important;
+  }
+
+  .large-text h1 {
+    font-size: 2.5rem !important;
+  }
+
+  .large-text h2 {
+    font-size: 2rem !important;
+  }
+
+  .large-text h3 {
+    font-size: 1.75rem !important;
+  }
+
+  .large-text p,
+  .large-text span,
+  .large-text div {
+    font-size: 1.125rem !important;
+    line-height: 1.75 !important;
+  }
+
+  .large-text button {
+    font-size: 1rem !important;
+    padding: 0.625rem 1.25rem !important;
+  }
+
+  /* Alertas Visuales */
+  .visual-alerts .toast,
+  .visual-alerts [role="alert"] {
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    border: 2px solid hsl(var(--primary));
+    box-shadow: 0 0 20px hsl(var(--primary) / 0.5);
+  }
+
+  @keyframes pulse {
+    0%, 100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.8;
+    }
+  }
 }

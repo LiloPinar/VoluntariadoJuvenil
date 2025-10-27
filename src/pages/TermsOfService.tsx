@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -5,6 +6,11 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { FileText, CheckCircle2, AlertCircle } from 'lucide-react';
 
 const TermsOfService = () => {
+  // Scroll al top cuando se carga la página
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
   return (
     <div className="min-h-screen flex flex-col">
       <Header currentPage="Términos de Servicio" />

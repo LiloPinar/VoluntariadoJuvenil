@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { EnrollmentDialog } from '@/components/EnrollmentDialog';
 import { EnrollmentStatusStepper } from '@/components/EnrollmentStatusStepper';
+import { ProjectActivities } from '@/components/ProjectActivities';
 import { useAuthContext } from '@/contexts/AuthContext';
 import { useProjectContext } from '@/contexts/ProjectContext';
 import { allProjects } from '@/data/projects';
@@ -58,8 +59,14 @@ const DetalleProyecto = () => {
   const [showProfileIncompleteDialog, setShowProfileIncompleteDialog] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
+  // Cargar proyectos desde localStorage o usar los predeterminados
+  const projects = (() => {
+    const savedProjects = localStorage.getItem('adminProjects');
+    return savedProjects ? JSON.parse(savedProjects) : allProjects;
+  })();
+
   const projectId = parseInt(id || '0');
-  const project = allProjects.find(p => p.id === projectId);
+  const project = projects.find(p => p.id === projectId);
 
   const isEnrolled = checkEnrolled(projectId, user?.email);
   const enrollmentStatus = getEnrollmentStatus(projectId, user?.email);
@@ -84,9 +91,19 @@ const DetalleProyecto = () => {
       return;
     }
 
-    // Si está inscrito, cancelar inscripción (sin validar perfil)
+    // Si está inscrito, cancelar inscripción (sin validar perfil ni inscripciones abiertas)
     if (isEnrolled) {
       handleUnenroll();
+      return;
+    }
+
+    // Validar que las inscripciones estén abiertas
+    if (!project.isOpenForEnrollment && project.isOpenForEnrollment !== undefined) {
+      toast({
+        title: 'Inscripciones cerradas',
+        description: 'Este proyecto ya no acepta nuevas inscripciones en este momento.',
+        variant: 'destructive',
+      });
       return;
     }
 
@@ -222,6 +239,27 @@ const DetalleProyecto = () => {
                 </p>
               </div>
 
+              {/* Banner de inscripciones cerradas */}
+              {!project.isOpenForEnrollment && !isEnrolled && (
+                <Card className="border-orange-500 bg-orange-50 dark:bg-orange-950/20">
+                  <CardContent className="p-4 sm:p-6">
+                    <div className="flex items-start gap-3">
+                      <AlertCircle className="h-5 w-5 sm:h-6 sm:w-6 text-orange-600 dark:text-orange-500 flex-shrink-0 mt-0.5" />
+                      <div className="flex-1">
+                        <h3 className="font-semibold text-orange-900 dark:text-orange-100 mb-2">
+                          Inscripciones Cerradas
+                        </h3>
+                        <p className="text-sm sm:text-base text-orange-800 dark:text-orange-200">
+                          Este proyecto actualmente no está aceptando nuevas inscripciones. 
+                          Las inscripciones podrían abrirse nuevamente en el futuro. 
+                          Te recomendamos explorar otros proyectos disponibles.
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
               {/* Descripción detallada */}
               <Card className="border-border bg-card">
                 <CardContent className="p-4 sm:p-6">
@@ -268,6 +306,15 @@ const DetalleProyecto = () => {
                   </div>
                 </CardContent>
               </Card>
+
+              {/* Actividades del Proyecto */}
+              {project.activities && project.activities.length > 0 && (
+                <ProjectActivities 
+                  activities={project.activities}
+                  userId={isEnrolled ? user?.email : undefined}
+                  showProgress={true}
+                />
+              )}
 
               {/* Requisitos */}
               <Card className="border-border bg-card">
@@ -363,7 +410,13 @@ const DetalleProyecto = () => {
                     <Button
                       className="w-full text-sm sm:text-base h-10 sm:h-11"
                       onClick={handleEnrollClick}
-                      disabled={isLoading || project.status === 'completed' || enrollmentStatus === 'pending'}
+                      disabled={
+                        isLoading || 
+                        project.status === 'completed' || 
+                        enrollmentStatus === 'pending' ||
+                        (!isEnrolled && !isAuthenticated && !(project.isOpenForEnrollment ?? true)) ||
+                        (!isEnrolled && isAuthenticated && !(project.isOpenForEnrollment ?? true))
+                      }
                       variant={isEnrolled && isAuthenticated ? 'outline' : 'default'}
                     >
                       {isLoading
@@ -372,10 +425,19 @@ const DetalleProyecto = () => {
                         ? 'Solicitud Pendiente'
                         : enrollmentStatus === 'rejected'
                         ? 'Solicitud Rechazada'
+                        : !(project.isOpenForEnrollment ?? true) && !isEnrolled
+                        ? 'Inscripciones Cerradas'
                         : isEnrolled && isAuthenticated
                         ? 'Cancelar inscripción'
                         : 'Inscribirse'}
                     </Button>
+                    
+                    {/* Mensaje cuando las inscripciones están cerradas */}
+                    {!(project.isOpenForEnrollment ?? true) && !isEnrolled && (
+                      <p className="text-xs text-center text-orange-600 dark:text-orange-400 mt-2">
+                        Las inscripciones están temporalmente cerradas
+                      </p>
+                    )}
                   </div>
                 </CardContent>
               </Card>
@@ -417,7 +479,7 @@ const DetalleProyecto = () => {
             <AlertDialogAction
               onClick={() => {
                 setShowProfileIncompleteDialog(false);
-                navigate('/configuracion');
+                navigate('/profile');
               }}
               className="w-full sm:w-auto"
             >

@@ -19,9 +19,13 @@ import ForgotPassword from "./pages/ForgotPassword";
 import TermsOfService from "./pages/TermsOfService";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import NotFound from "./pages/NotFound";
+import AdminDashboard from "./pages/admin/Dashboard";
+import ProjectManagement from "./pages/admin/ProjectManagement";
+import ActivityValidation from "./pages/admin/ActivityValidation";
 import { LocaleProvider } from "./i18n/LocaleContext";
 import { AuthProvider } from "./contexts/AuthContext";
 import { ProjectProvider } from "./contexts/ProjectContext";
+import { ProtectedRoute } from "./components/ProtectedRoute";
 
 const queryClient = new QueryClient();
 
@@ -59,6 +63,31 @@ const App = () => {
               <Route path="/forgot-password" element={<ForgotPassword />} />
               <Route path="/terms" element={<TermsOfService />} />
               <Route path="/privacy" element={<PrivacyPolicy />} />
+              {/* Rutas de administrador */}
+              <Route 
+                path="/admin/dashboard" 
+                element={
+                  <ProtectedRoute requireRole="admin">
+                    <AdminDashboard />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/admin/projects" 
+                element={
+                  <ProtectedRoute requireRole="admin">
+                    <ProjectManagement />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/admin/activities" 
+                element={
+                  <ProtectedRoute requireRole="admin">
+                    <ActivityValidation />
+                  </ProtectedRoute>
+                } 
+              />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>

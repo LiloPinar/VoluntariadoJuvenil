@@ -15,9 +15,11 @@ import {
   LogOut,
   KeyRound,
   BookmarkCheck,
+  Bell,
 } from "lucide-react";
 import { useState } from "react";
 import ShortcutHelp from "@/components/ShortcutHelp";
+import { GlobalSearch } from "@/components/GlobalSearch";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -38,7 +40,14 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Badge } from "@/components/ui/badge";
 import { NavLink, useNavigate } from "react-router-dom";
+import logoImage from "@/assets/VoluntariadoJuvenilLogo.jpg";
 
 interface HeaderProps {
   currentPage: string;
@@ -55,9 +64,35 @@ const navItems = [
 
 export const Header = ({ currentPage, onMenuClick }: HeaderProps) => {
   const [showShortcuts, setShowShortcuts] = useState(false);
+  const [notifications, setNotifications] = useState([
+    { id: 1, title: "Nuevo Proyecto: Limpieza de Playas", message: "Se ha publicado un nuevo proyecto ambiental", time: "Hace 5 min", unread: true },
+    { id: 2, title: "Proyecto Actualizado", message: "Apoyo Educativo tiene nuevas plazas disponibles", time: "Hace 1 hora", unread: true },
+    { id: 3, title: "Recordatorio", message: "Tienes un proyecto próximo este fin de semana", time: "Hace 3 horas", unread: false },
+  ]);
   const { locale, t, setLocale } = useLocale();
   const { user, isAuthenticated, logout } = useAuthContext();
   const navigate = useNavigate();
+
+  const unreadCount = notifications.filter(n => n.unread).length;
+
+  const markAsRead = (id: number) => {
+    setNotifications(prev => 
+      prev.map(n => n.id === id ? { ...n, unread: false } : n)
+    );
+  };
+
+  const markAllAsRead = () => {
+    setNotifications(prev => prev.map(n => ({ ...n, unread: false })));
+  };
+
+  // Filtrar navItems según autenticación
+  const visibleNavItems = navItems.filter(item => {
+    // Si no está autenticado, ocultar "Mis Proyectos" y "Mis Horas"
+    if (!isAuthenticated && (item.label === "Mis Proyectos" || item.label === "Mis Horas")) {
+      return false;
+    }
+    return true;
+  });
 
   const handleLogout = () => {
     logout();
@@ -75,8 +110,22 @@ export const Header = ({ currentPage, onMenuClick }: HeaderProps) => {
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      {/* Primera fila: Logo + Nombre + Búsqueda + Idioma + Auth */}
-      <div className="container flex h-14 items-center gap-2 sm:gap-3 px-3 sm:px-4 border-b border-border/50">
+      {/* Header unificado: Logo + Navegación + Idioma + Auth */}
+      <div className="flex h-14 items-center gap-2 sm:gap-4 pl-2 sm:pl-3 pr-6 sm:pr-8">
+        
+        {/* Logo + Nombre Sistema - Pegado a la izquierda */}
+        <NavLink to="/" className="flex items-center gap-2 shrink-0 hover:opacity-80 transition-opacity">
+          <img 
+            src={logoImage} 
+            alt="VoluntariaJoven Logo" 
+            className="h-10 w-10 sm:h-12 sm:w-12 object-cover rounded-full shadow-md border-2 border-primary/20"
+          />
+          <div className="hidden sm:flex flex-col">
+            <h1 className="text-sm sm:text-base font-bold leading-tight">VoluntariaJoven</h1>
+            <span className="text-xs text-muted-foreground leading-tight">{currentPage}</span>
+          </div>
+        </NavLink>
+
         {/* Mobile hamburger (shows on small screens) */}
         <Button
           variant="ghost"
@@ -88,28 +137,56 @@ export const Header = ({ currentPage, onMenuClick }: HeaderProps) => {
           <Menu className="h-5 w-5" />
         </Button>
 
-        {/* Logo + Nombre Sistema */}
-        <NavLink to="/" className="flex items-center gap-2 shrink-0 hover:opacity-80 transition-opacity">
-          <div className="flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-lg bg-gradient-to-br from-primary via-secondary to-accent shadow-md">
-            <span className="text-base sm:text-lg font-bold text-white">V</span>
-          </div>
-          <div className="hidden sm:flex flex-col">
-            <h1 className="text-sm sm:text-base font-bold leading-tight">VoluntariaJoven</h1>
-            <span className="text-xs text-muted-foreground leading-tight">{currentPage}</span>
-          </div>
-        </NavLink>
+        {/* Botón Panel Admin solo para admin - Solo ícono */}
+        {isAuthenticated && user?.role === 'admin' && (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="hidden lg:flex h-10 w-10"
+            onClick={() => navigate('/admin/dashboard')}
+            title="Panel de Administración"
+          >
+            <Users className="h-5 w-5" />
+          </Button>
+        )}
 
-        {/* Barra búsqueda - Hidden on mobile */}
-        <div className="hidden md:flex flex-1 max-w-md mx-4">
-          <div className="relative w-full">
-            <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              type="search"
-              placeholder={t('buscar_placeholder')}
-              className="w-full pl-9 pr-3 h-9 text-sm"
-            />
-          </div>
-        </div>
+        {/* Navegación principal - centrada */}
+        <nav className="flex items-center gap-0.5 sm:gap-1 mx-auto overflow-x-auto">
+          {visibleNavItems.map((item) => (
+            <NavLink
+              key={item.label}
+              to={
+                item.label === "Inicio"
+                  ? "/"
+                  : item.label === "Proyectos"
+                  ? "/proyectos"
+                  : item.label === "Mis Proyectos"
+                  ? "/mis-proyectos"
+                  : item.label === "Mis Horas"
+                  ? "/mis-horas"
+                  : "/comunidad"
+              }
+              className={({ isActive }) =>
+                `flex items-center gap-1 sm:gap-1.5 h-9 px-2 sm:px-3 rounded text-xs sm:text-sm whitespace-nowrap ${
+                  isActive ? "text-primary font-semibold" : "text-foreground hover:text-primary"
+                }`
+              }
+            >
+              <item.icon className="h-3 w-3 sm:h-4 sm:w-4 shrink-0" />
+              <span className="hidden sm:inline">
+                {item.label === 'Inicio' 
+                  ? t('inicio') 
+                  : item.label === 'Proyectos' 
+                  ? t('proyectos') 
+                  : item.label === 'Mis Proyectos'
+                  ? 'Mis Proyectos'
+                  : item.label === 'Mis Horas' 
+                  ? t('mis_horas') 
+                  : t('comunidad')}
+              </span>
+            </NavLink>
+          ))}
+        </nav>
 
         {/* Idioma - Responsive */}
         <Select value={locale} onValueChange={(v) => setLocale(v as any)}>
@@ -123,9 +200,84 @@ export const Header = ({ currentPage, onMenuClick }: HeaderProps) => {
           </SelectContent>
         </Select>
 
-        {/* Auth Buttons (navigate to login/register) */}
+        {/* Buscador Global */}
+        <GlobalSearch />
+
+        {/* Botón de Notificaciones */}
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button 
+              variant="ghost" 
+              size="icon"
+              className="relative h-9 w-9"
+              aria-label="Notificaciones"
+            >
+              <Bell className="h-5 w-5" />
+              {unreadCount > 0 && (
+                <Badge 
+                  variant="destructive" 
+                  className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-[10px]"
+                >
+                  {unreadCount}
+                </Badge>
+              )}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-80 p-0" align="end">
+            <div className="flex items-center justify-between border-b p-4">
+              <h3 className="font-semibold">{t('notifications')}</h3>
+              {unreadCount > 0 && (
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={markAllAsRead}
+                  className="h-8 text-xs"
+                >
+                  {t('mark_all_read')}
+                </Button>
+              )}
+            </div>
+            <div className="max-h-[400px] overflow-y-auto">
+              {notifications.length === 0 ? (
+                <div className="p-8 text-center text-sm text-muted-foreground">
+                  {t('no_notifications')}
+                </div>
+              ) : (
+                notifications.map((notification) => (
+                  <div
+                    key={notification.id}
+                    className={`border-b p-4 hover:bg-muted/50 cursor-pointer transition-colors ${
+                      notification.unread ? 'bg-primary/5' : ''
+                    }`}
+                    onClick={() => markAsRead(notification.id)}
+                  >
+                    <div className="flex items-start gap-3">
+                      <div className="flex-1 space-y-1">
+                        <div className="flex items-center gap-2">
+                          <p className="text-sm font-medium leading-none">
+                            {notification.title}
+                          </p>
+                          {notification.unread && (
+                            <div className="h-2 w-2 rounded-full bg-primary" />
+                          )}
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          {notification.message}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {notification.time}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </PopoverContent>
+        </Popover>
+
         {/* Botones de autenticación o Menú de usuario */}
-        <div className="flex items-center gap-1 sm:gap-2 shrink-0 ml-auto">
+        <div className="flex items-center gap-2 sm:gap-3 shrink-0">
           <Button 
             variant="ghost" 
             size="sm" 
@@ -201,73 +353,6 @@ export const Header = ({ currentPage, onMenuClick }: HeaderProps) => {
             </>
           )}
         </div>
-      </div>
-
-      {/* Segunda fila: Menú + Navegación */}
-      <div className="container flex h-12 items-center gap-2 sm:gap-4 px-3 sm:px-4">
-        {/* Menu Dropdown */}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="sm" className="gap-1 sm:gap-2 h-9 px-2 sm:px-3 shrink-0">
-              <Menu className="h-3 w-3 sm:h-4 sm:w-4" />
-              <span className="text-xs sm:text-sm">Menú</span>
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="start" className="w-56 bg-background">
-            <DropdownMenuLabel>{t('menu')}</DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem asChild>
-              <NavLink to="/configuracion">
-                <Settings className="mr-2 h-4 w-4" />
-                <span>{t('configuracion')}</span>
-              </NavLink>
-            </DropdownMenuItem>
-            <DropdownMenuItem asChild>
-              <NavLink to="/ayuda">
-                <HelpCircle className="mr-2 h-4 w-4" />
-                <span>{t('ayuda')}</span>
-              </NavLink>
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-
-        {/* Horizontal Navigation - Responsive */}
-        <nav className="flex items-center gap-0.5 sm:gap-1 mx-auto overflow-x-auto">
-          {navItems.map((item) => (
-            <NavLink
-              key={item.label}
-              to={
-                item.label === "Inicio"
-                  ? "/"
-                  : item.label === "Proyectos"
-                  ? "/proyectos"
-                  : item.label === "Mis Proyectos"
-                  ? "/mis-proyectos"
-                  : item.label === "Mis Horas"
-                  ? "/mis-horas"
-                  : "/comunidad"
-              }
-              className={({ isActive }) =>
-                `flex items-center gap-1 sm:gap-1.5 h-9 px-2 sm:px-3 rounded text-xs sm:text-sm whitespace-nowrap ${
-                  isActive ? "text-primary font-semibold" : "text-foreground hover:text-primary"
-                }`
-              }
-            >
-              <item.icon className="h-3 w-3 sm:h-4 sm:w-4 shrink-0" />
-              <span className="hidden sm:inline">
-                {item.label === 'Inicio' 
-                  ? t('inicio') 
-                  : item.label === 'Proyectos' 
-                  ? t('proyectos') 
-                  : item.label === 'Mis Proyectos'
-                  ? 'Mis Proyectos'
-                  : item.label === 'Mis Horas' 
-                  ? t('mis_horas') 
-                  : t('comunidad')}
-              </span>
-            </NavLink>
-          ))}
-        </nav>
       </div>
       <ShortcutHelp open={showShortcuts} onClose={() => setShowShortcuts(false)} />
     </header>

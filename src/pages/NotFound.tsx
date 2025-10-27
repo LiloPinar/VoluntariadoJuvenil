@@ -4,6 +4,11 @@ import { useEffect } from "react";
 const NotFound = () => {
   const location = useLocation();
 
+  // Scroll al top cuando se carga la página
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
   useEffect(() => {
     console.error("404 Error: User attempted to access non-existent route:", location.pathname);
   }, [location.pathname]);

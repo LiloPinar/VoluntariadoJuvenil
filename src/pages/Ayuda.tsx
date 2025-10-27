@@ -1,9 +1,14 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Header } from '@/components/Header';
 import { useLocale } from '@/i18n/LocaleContext';
 
 const Ayuda = () => {
   const { t } = useLocale();
+
+  // Scroll al top cuando se carga la página
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
 
   return (
     <div className="min-h-screen flex flex-col">

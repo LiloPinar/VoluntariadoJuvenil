@@ -51,19 +51,31 @@ const Configuracion = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   // Estados para notificaciones
-  const [emailNotifications, setEmailNotifications] = useState(true);
+  const [emailNotifications, setEmailNotifications] = useState(false);
   const [projectNotifications, setProjectNotifications] = useState(true);
   const [reminderNotifications, setReminderNotifications] = useState(false);
 
   // Estados para accesibilidad
-  const [visualAlerts, setVisualAlerts] = useState(false);
+  const [visualAlerts, setVisualAlerts] = useState(() => {
+    const saved = localStorage.getItem('visualAlerts');
+    return saved !== null ? saved === 'true' : true; // Por defecto activado
+  });
   const [voiceReading, setVoiceReading] = useState(false);
-  const [highContrast, setHighContrast] = useState(false);
-  const [largeText, setLargeText] = useState(false);
+  const [highContrast, setHighContrast] = useState(() => {
+    return localStorage.getItem('highContrast') === 'true';
+  });
+  const [largeText, setLargeText] = useState(() => {
+    return localStorage.getItem('largeText') === 'true';
+  });
   const [darkMode, setDarkMode] = useState(() => {
     // Cargar preferencia de localStorage
     return localStorage.getItem('darkMode') === 'true';
   });
+
+  // Scroll al top cuando se carga la página
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
 
   // Aplicar tema oscuro al cargar
   useEffect(() => {
@@ -71,6 +83,33 @@ const Configuracion = () => {
       document.documentElement.classList.add('dark');
     }
   }, []);
+
+  // Aplicar alto contraste
+  useEffect(() => {
+    if (highContrast) {
+      document.documentElement.classList.add('high-contrast');
+    } else {
+      document.documentElement.classList.remove('high-contrast');
+    }
+  }, [highContrast]);
+
+  // Aplicar texto ampliado
+  useEffect(() => {
+    if (largeText) {
+      document.documentElement.classList.add('large-text');
+    } else {
+      document.documentElement.classList.remove('large-text');
+    }
+  }, [largeText]);
+
+  // Aplicar alertas visuales
+  useEffect(() => {
+    if (visualAlerts) {
+      document.documentElement.classList.add('visual-alerts');
+    } else {
+      document.documentElement.classList.remove('visual-alerts');
+    }
+  }, [visualAlerts]);
 
   // Manejo cambio de contraseña
   const handlePasswordChange = (field: string, value: string) => {
@@ -197,6 +236,36 @@ const Configuracion = () => {
     toast({
       title: checked ? "Modo oscuro activado" : "Modo claro activado",
       description: "El tema se ha actualizado correctamente.",
+    });
+  };
+
+  const handleToggleHighContrast = (checked: boolean) => {
+    setHighContrast(checked);
+    localStorage.setItem('highContrast', checked.toString());
+    
+    toast({
+      title: checked ? "Alto contraste activado" : "Alto contraste desactivado",
+      description: checked ? "Se aumentó el contraste de colores para mejor visibilidad." : "Se restauró el contraste normal.",
+    });
+  };
+
+  const handleToggleLargeText = (checked: boolean) => {
+    setLargeText(checked);
+    localStorage.setItem('largeText', checked.toString());
+    
+    toast({
+      title: checked ? "Texto ampliado activado" : "Texto normal",
+      description: checked ? "El tamaño del texto se ha incrementado." : "Se restauró el tamaño normal del texto.",
+    });
+  };
+
+  const handleToggleVisualAlerts = (checked: boolean) => {
+    setVisualAlerts(checked);
+    localStorage.setItem('visualAlerts', checked.toString());
+    
+    toast({
+      title: checked ? "Alertas visuales activadas" : "Alertas visuales desactivadas",
+      description: checked ? "Verás notificaciones visuales en lugar de sonidos." : "Se restauraron las notificaciones normales.",
     });
   };
 
@@ -444,7 +513,7 @@ const Configuracion = () => {
                 </div>
                 <Switch
                   checked={visualAlerts}
-                  onCheckedChange={setVisualAlerts}
+                  onCheckedChange={handleToggleVisualAlerts}
                 />
               </div>
               
@@ -480,7 +549,7 @@ const Configuracion = () => {
                 </div>
                 <Switch
                   checked={highContrast}
-                  onCheckedChange={setHighContrast}
+                  onCheckedChange={handleToggleHighContrast}
                 />
               </div>
               
@@ -498,7 +567,7 @@ const Configuracion = () => {
                 </div>
                 <Switch
                   checked={largeText}
-                  onCheckedChange={setLargeText}
+                  onCheckedChange={handleToggleLargeText}
                 />
               </div>
             </CardContent>

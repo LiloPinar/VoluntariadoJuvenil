@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Header } from "@/components/Header";
 import { useLocale } from '@/i18n/LocaleContext';
 import { Sidebar } from "@/components/Sidebar";
@@ -9,7 +9,10 @@ const Comunidad = () => {
 
   const { t } = useLocale();
 
- 
+  // Scroll al top cuando se carga la página
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
 
   return (
     <div className="flex min-h-screen flex-col">

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { useLocale } from '@/i18n/LocaleContext';
@@ -27,6 +27,11 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
+  // Scroll al top cuando se carga la página
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
   // Manejo del envío del formulario
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -51,15 +56,25 @@ const Login = () => {
         const loginSuccess = await authContextLogin(formData.email, formData.password);
         
         if (loginSuccess) {
+          // Obtener el usuario para verificar su rol
+          const users = JSON.parse(localStorage.getItem('users') || '[]');
+          const loggedUser = users.find((u: any) => u.email === formData.email);
+          
           toast({
             title: t('login_success'),
             description: `${t('home_title')}`,
             className: "bg-green-50 dark:bg-green-950 border-green-200 dark:border-green-800 dark:text-green-50",
           });
           
-          // Redirigir a la página de retorno o al inicio
-          const returnTo = (location.state as { returnTo?: string })?.returnTo || '/';
-          setTimeout(() => navigate(returnTo), 500);
+          // Redirigir según el rol del usuario
+          const returnTo = (location.state as { returnTo?: string })?.returnTo;
+          if (returnTo) {
+            setTimeout(() => navigate(returnTo), 500);
+          } else if (loggedUser?.role === 'admin') {
+            setTimeout(() => navigate('/admin/dashboard'), 500);
+          } else {
+            setTimeout(() => navigate('/'), 500);
+          }
         }
       } else {
         if (result.isLocked) {

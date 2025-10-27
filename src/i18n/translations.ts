@@ -13,10 +13,14 @@ export const translations = {
     inicio_sesion: "Sign in",
     registrate: "Sign up",
     buscar_placeholder: "Search projects...",
+    notifications: "Notifications",
+    mark_all_read: "Mark all as read",
+    no_notifications: "No notifications",
 
     // pages
     home_title: "Welcome to VoluntariaJoven!",
     home_sub: "Connect with projects that change lives.",
+    home_description: "We are a platform dedicated to connecting young volunteers with community projects that generate real impact. We believe in the power of youth to transform communities and build a more supportive future. Join our network of over 2,500 active volunteers who are already making a difference in areas such as education, environment, health, and social development.",
     explorar_proyectos: "Explore Projects",
     ver_mis_horas: "View My Hours",
     proyectos_destacados: "Featured Projects",
@@ -95,10 +99,14 @@ export const translations = {
     inicio_sesion: "Inicia sesión",
     registrate: "Regístrate",
     buscar_placeholder: "Buscar proyectos...",
+    notifications: "Notificaciones",
+    mark_all_read: "Marcar todas como leídas",
+    no_notifications: "No hay notificaciones",
 
     // pages
     home_title: "¡Bienvenido a VoluntariaJoven!",
     home_sub: "Conecta con proyectos que transforman vidas.",
+    home_description: "Somos una plataforma dedicada a conectar jóvenes voluntarios con proyectos comunitarios que generan impacto real. Creemos en el poder de la juventud para transformar comunidades y construir un futuro más solidario. Únete a nuestra red de más de 2,500 voluntarios activos que ya están haciendo la diferencia en áreas como educación, medio ambiente, salud y desarrollo social.",
     explorar_proyectos: "Explorar Proyectos",
     ver_mis_horas: "Ver Mis Horas",
     proyectos_destacados: "Proyectos Destacados",

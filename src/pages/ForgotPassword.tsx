@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { useLocale } from '@/i18n/LocaleContext';
@@ -25,6 +25,11 @@ const ForgotPassword = () => {
   // Validación
   const [error, setError] = useState('');
   const [touched, setTouched] = useState(false);
+
+  // Scroll al top cuando se carga la página
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
 
   // Manejo de cambio
   const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {

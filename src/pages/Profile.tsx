@@ -20,6 +20,11 @@ const Profile = () => {
   const { user, isAuthenticated, updateUser } = useAuthContext();
   const navigate = useNavigate();
 
+  // Scroll al top cuando se carga la página
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
   // Redirigir si no está autenticado
   useEffect(() => {
     if (!isAuthenticated) {
@@ -101,6 +106,24 @@ const Profile = () => {
       case 'phone':
         error = validatePhone(value, t);
         break;
+      case 'birthDate':
+        if (value) {
+          const birthDate = new Date(value);
+          const today = new Date();
+          const age = today.getFullYear() - birthDate.getFullYear();
+          const monthDiff = today.getMonth() - birthDate.getMonth();
+          const dayDiff = today.getDate() - birthDate.getDate();
+          
+          // Ajustar edad si aún no ha cumplido años este año
+          const actualAge = (monthDiff < 0 || (monthDiff === 0 && dayDiff < 0)) ? age - 1 : age;
+          
+          if (actualAge < 16) {
+            error = 'Debes tener al menos 16 años para registrarte';
+          } else if (birthDate > today) {
+            error = 'La fecha de nacimiento no puede ser futura';
+          }
+        }
+        break;
     }
     
     setErrors(prev => ({ ...prev, [field]: error }));
@@ -163,16 +186,34 @@ const Profile = () => {
 
   // Guardar cambios
   const handleSave = async () => {
+    // Validar fecha de nacimiento primero
+    let birthDateError = '';
+    if (tempProfile.birthDate) {
+      const birthDate = new Date(tempProfile.birthDate);
+      const today = new Date();
+      const age = today.getFullYear() - birthDate.getFullYear();
+      const monthDiff = today.getMonth() - birthDate.getMonth();
+      const dayDiff = today.getDate() - birthDate.getDate();
+      const actualAge = (monthDiff < 0 || (monthDiff === 0 && dayDiff < 0)) ? age - 1 : age;
+      
+      if (actualAge < 16) {
+        birthDateError = 'Debes tener al menos 16 años para registrarte';
+      } else if (birthDate > today) {
+        birthDateError = 'La fecha de nacimiento no puede ser futura';
+      }
+    }
+
     // Validar todos los campos
     const newErrors: Record<string, string> = {
       firstName: validateName(tempProfile.firstName, t),
       lastName: validateName(tempProfile.lastName, t),
       email: validateEmail(tempProfile.email, t),
       phone: tempProfile.phone ? validatePhone(tempProfile.phone, t) : '',
+      birthDate: birthDateError,
     };
 
     setErrors(newErrors);
-    setTouched({ firstName: true, lastName: true, email: true, phone: true });
+    setTouched({ firstName: true, lastName: true, email: true, phone: true, birthDate: true });
 
     // Si hay errores, no continuar
     if (Object.values(newErrors).some(error => error)) {
@@ -519,15 +560,38 @@ const Profile = () => {
                   Fecha de Nacimiento
                 </Label>
                 {isEditing ? (
-                  <Input
-                    id="birthDate"
-                    type="date"
-                    value={tempProfile.birthDate}
-                    onChange={(e) => handleChange('birthDate', e.target.value)}
-                    className="h-11"
-                    disabled={isLoading}
-                    max={new Date().toISOString().split('T')[0]}
-                  />
+                  <div className="space-y-1">
+                    <Input
+                      id="birthDate"
+                      type="date"
+                      value={tempProfile.birthDate}
+                      onChange={(e) => handleChange('birthDate', e.target.value)}
+                      onBlur={() => handleBlur('birthDate')}
+                      className={`h-11 ${errors.birthDate && touched.birthDate ? 'border-destructive' : ''}`}
+                      disabled={isLoading}
+                      min={(() => {
+                        // Calcular fecha mínima (16 años atrás desde hoy)
+                        const minDate = new Date();
+                        minDate.setFullYear(minDate.getFullYear() - 100); // Máximo 100 años
+                        return minDate.toISOString().split('T')[0];
+                      })()}
+                      max={(() => {
+                        // Calcular fecha máxima (16 años atrás desde hoy)
+                        const maxDate = new Date();
+                        maxDate.setFullYear(maxDate.getFullYear() - 16);
+                        return maxDate.toISOString().split('T')[0];
+                      })()}
+                    />
+                    {errors.birthDate && touched.birthDate && (
+                      <p className="text-sm text-destructive flex items-center gap-1">
+                        <AlertCircle className="h-3 w-3" />
+                        {errors.birthDate}
+                      </p>
+                    )}
+                    <p className="text-xs text-muted-foreground">
+                      Debes tener al menos 16 años para registrarte
+                    </p>
+                  </div>
                 ) : (
                   <p className="text-base p-2 bg-muted/50 rounded">
                     {profile.birthDate 

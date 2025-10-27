@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { Header } from "@/components/Header";
 import { useLocale } from '@/i18n/LocaleContext';
 import { Sidebar } from "@/components/Sidebar";
@@ -32,15 +32,26 @@ const Proyectos = () => {
 
   const { t } = useLocale();
 
+  // Cargar proyectos desde localStorage o usar los predeterminados
+  const projects = useMemo(() => {
+    const savedProjects = localStorage.getItem('adminProjects');
+    return savedProjects ? JSON.parse(savedProjects) : allProjects;
+  }, []);
+
+  // Scroll al top cuando se carga la página
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
   // Obtener ubicaciones únicas
   const uniqueLocations = useMemo(() => {
-    const locations = new Set(allProjects.map(p => p.location));
+    const locations = new Set(projects.map(p => p.location));
     return Array.from(locations);
-  }, []);
+  }, [projects]);
 
   // Filtrar y ordenar proyectos
   const filteredProjects = useMemo(() => {
-    let filtered = [...allProjects];
+    let filtered = [...projects];
 
     // Filtrar por búsqueda
     if (searchQuery) {
@@ -77,13 +88,13 @@ const Proyectos = () => {
     }
 
     return filtered;
-  }, [allProjects, searchQuery, selectedCategory, selectedLocation, sortBy]);
+  }, [projects, searchQuery, selectedCategory, selectedLocation, sortBy]);
 
   const categories = [
-    { value: "all", label: "Todos", count: allProjects.length },
-    { value: "social", label: "Social", count: allProjects.filter(p => p.category === "social").length },
-    { value: "environmental", label: "Ambiental", count: allProjects.filter(p => p.category === "environmental").length },
-    { value: "educational", label: "Educativo", count: allProjects.filter(p => p.category === "educational").length },
+    { value: "all", label: "Todos", count: projects.length },
+    { value: "social", label: "Social", count: projects.filter(p => p.category === "social").length },
+    { value: "environmental", label: "Ambiental", count: projects.filter(p => p.category === "environmental").length },
+    { value: "educational", label: "Educativo", count: projects.filter(p => p.category === "educational").length },
   ];
 
   return (
@@ -186,7 +197,7 @@ const Proyectos = () => {
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="all">Todas las ubicaciones</SelectItem>
-                        {uniqueLocations.map(location => (
+                        {uniqueLocations.map((location: string) => (
                           <SelectItem key={location} value={location}>
                             {location}
                           </SelectItem>

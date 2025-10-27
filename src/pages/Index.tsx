@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Header } from "@/components/Header";
 import { Sidebar } from "@/components/Sidebar";
 import { ProjectCard } from "@/components/ProjectCard";
@@ -12,9 +13,21 @@ import { allProjects } from "@/data/projects";
 
 const Index = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const navigate = useNavigate();
+
+  // Scroll al top cuando se carga la página
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
+  // Cargar proyectos desde localStorage o usar los predeterminados
+  const projects = (() => {
+    const savedProjects = localStorage.getItem('adminProjects');
+    return savedProjects ? JSON.parse(savedProjects) : allProjects;
+  })();
 
   // Tomar los primeros 6 proyectos para mostrar en la página de inicio
-  const featuredProjects = allProjects.slice(0, 6);
+  const featuredProjects = projects.slice(0, 6);
 
   const stats = [
     {
@@ -54,24 +67,35 @@ const Index = () => {
               alt="Jóvenes voluntarios trabajando juntos"
               className="absolute inset-0 h-full w-full object-cover"
             />
-            <div className="absolute inset-0 bg-gradient-to-r from-background/95 via-background/80 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/70 to-black/30 dark:from-black/90 dark:via-black/75" />
             <div className="container relative flex h-full items-center px-4 sm:px-6 lg:px-8">
-              <div className="max-w-2xl space-y-4 sm:space-y-6">
-                <h1 className="text-3xl font-bold leading-tight sm:text-4xl md:text-5xl lg:text-6xl">
+              <div className="max-w-3xl space-y-4 sm:space-y-6">
+                <h1 className="text-3xl font-bold leading-tight text-white sm:text-4xl md:text-5xl lg:text-6xl drop-shadow-2xl">
                   {t('home_title')}
                 </h1>
-                <p className="text-base sm:text-lg text-muted-foreground md:text-xl">
-                  {t('home_sub')}
-                </p>
+                <div className="space-y-3 sm:space-y-4">
+                  <p className="text-base sm:text-lg text-white md:text-xl drop-shadow-xl font-medium">
+                    {t('home_sub')}
+                  </p>
+                  <p className="text-sm sm:text-base text-white/95 leading-relaxed drop-shadow-lg max-w-2xl font-light">
+                    {t('home_description')}
+                  </p>
+                </div>
                 <div className="flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-4">
                   <Button
                     size="lg"
                     className="bg-gradient-to-r from-primary to-secondary hover:opacity-90 w-full sm:w-auto"
+                    onClick={() => navigate('/proyectos')}
                   >
                     {t('explorar_proyectos')}
                     <ArrowRight className="ml-2 h-5 w-5" />
                   </Button>
-                  <Button size="lg" variant="outline" className="w-full sm:w-auto">
+                  <Button 
+                    size="lg" 
+                    variant="outline" 
+                    className="w-full sm:w-auto"
+                    onClick={() => navigate('/mis-horas')}
+                  >
                     {t('ver_mis_horas')}
                   </Button>
                 </div>
@@ -115,7 +139,12 @@ const Index = () => {
               </div>
 
               <div className="mt-6 sm:mt-8 text-center">
-                <Button variant="outline" size="lg" className="w-full sm:w-auto">
+                <Button 
+                  variant="outline" 
+                  size="lg" 
+                  className="w-full sm:w-auto"
+                  onClick={() => navigate('/proyectos')}
+                >
                   {t('ver_todos_proyectos')}
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
