@@ -21,6 +21,7 @@ const ForgotPassword = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [emailSent, setEmailSent] = useState(false);
   const [countdown, setCountdown] = useState(0);
+  const [resetUrl, setResetUrl] = useState('');
 
   // Validación
   const [error, setError] = useState('');
@@ -66,8 +67,15 @@ const ForgotPassword = () => {
     setIsLoading(true);
 
     try {
-      // Simular envío de email (aquí iría la llamada real al backend)
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      // Generar token de recuperación y guardarlo en localStorage (simulación de backend)
+      const token = (Math.random().toString(36).substring(2) + Date.now().toString(36));
+      const expiresAt = Date.now() + 1000 * 60 * 60; // 1 hora
+      const stored = JSON.parse(localStorage.getItem('passwordResetTokens') || '[]');
+      stored.push({ token, email, expiresAt });
+      localStorage.setItem('passwordResetTokens', JSON.stringify(stored));
+
+      // Preparar enlace (en producción el backend enviaría este enlace por email)
+      const resetUrl = `${window.location.origin}/reset-password?token=${token}`;
 
       setEmailSent(true);
       setCountdown(60); // 60 segundos
@@ -84,14 +92,17 @@ const ForgotPassword = () => {
       }, 1000);
 
       toast({
-        title: "Email enviado",
-        description: "Revisa tu bandeja de entrada para recuperar tu contraseña.",
+        title: "Email enviado (simulado)",
+        description: "Se ha generado un enlace de recuperación. En un entorno real se enviaría por email.",
         className: "bg-green-50 dark:bg-green-950 border-green-200 dark:border-green-800 dark:text-green-50",
       });
+
+      // Guardar temporalmente el resetUrl para mostrarlo en la UI (debug/dev)
+      localStorage.setItem('lastResetUrl', resetUrl);
     } catch (error) {
       toast({
-        title: "Error al enviar",
-        description: "No se pudo enviar el email. Intenta nuevamente.",
+        title: "Error al generar enlace",
+        description: "No se pudo generar el enlace de recuperación. Intenta nuevamente.",
         variant: "destructive",
       });
     } finally {
@@ -105,7 +116,18 @@ const ForgotPassword = () => {
     setEmail('');
     setError('');
     setTouched(false);
+    // limpiar enlace simulado
+    localStorage.removeItem('lastResetUrl');
+    setResetUrl('');
   };
+
+  // Cargar enlace simulado (solo para desarrollo) cuando se envió el email
+  useEffect(() => {
+    if (emailSent) {
+      const url = localStorage.getItem('lastResetUrl') || '';
+      setResetUrl(url);
+    }
+  }, [emailSent]);
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -244,6 +266,31 @@ const ForgotPassword = () => {
                         <li>• Sigue las instrucciones para crear una nueva contraseña</li>
                       </ul>
                     </div>
+
+                    {/* Mostrar enlace simulado para desarrollo/testing */}
+                    {resetUrl && (
+                      <div className="mt-4 p-3 bg-slate-50 rounded-md border">
+                        <p className="text-sm mb-2">Enlace de recuperación (simulado para desarrollo):</p>
+                        <div className="flex gap-2 items-center">
+                          <a href={resetUrl} target="_blank" rel="noreferrer" className="text-blue-600 underline truncate max-w-xs">{resetUrl}</a>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => navigator.clipboard.writeText(resetUrl)}
+                            className="ml-2"
+                          >
+                            Copiar enlace
+                          </Button>
+                          <Button
+                            size="sm"
+                            onClick={() => window.open(resetUrl, '_blank')}
+                            className="ml-auto"
+                          >
+                            Abrir enlace
+                          </Button>
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   {countdown > 0 ? (
