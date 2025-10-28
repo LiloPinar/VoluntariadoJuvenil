@@ -26,6 +26,7 @@ import { LocaleProvider } from "./i18n/LocaleContext";
 import { AuthProvider } from "./contexts/AuthContext";
 import { ProjectProvider } from "./contexts/ProjectContext";
 import { ProtectedRoute } from "./components/ProtectedRoute";
+import SelectionReader from "./components/SelectionReader";
 
 const queryClient = new QueryClient();
 
@@ -43,6 +44,7 @@ const App = () => {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
+        <SelectionReader />
         <Toaster />
         <Sonner />
         <AuthProvider>
