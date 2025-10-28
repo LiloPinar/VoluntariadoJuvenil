@@ -15,7 +15,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Search, SlidersHorizontal, Grid3x3, List, MapPin, Clock } from "lucide-react";
-import { allProjects } from "@/data/projects";
+import { allProjects, getProjectTitle, getProjectDescription } from "@/data/projects";
 
 type Category = "all" | "social" | "environmental" | "educational";
 type SortBy = "recent" | "popular" | "hours-asc" | "hours-desc";
@@ -30,7 +30,7 @@ const Proyectos = () => {
   const [viewMode, setViewMode] = useState<ViewMode>("grid");
   const [showFilters, setShowFilters] = useState(false);
 
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
 
   // Cargar proyectos desde localStorage o usar los predeterminados
   const projects = useMemo(() => {
@@ -55,10 +55,12 @@ const Proyectos = () => {
 
     // Filtrar por búsqueda
     if (searchQuery) {
-      filtered = filtered.filter(project =>
-        project.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        project.description.toLowerCase().includes(searchQuery.toLowerCase())
-      );
+      filtered = filtered.filter(project => {
+        const title = getProjectTitle(project, locale);
+        const description = getProjectDescription(project, locale);
+        return title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+               description.toLowerCase().includes(searchQuery.toLowerCase());
+      });
     }
 
     // Filtrar por categoría
@@ -91,10 +93,10 @@ const Proyectos = () => {
   }, [projects, searchQuery, selectedCategory, selectedLocation, sortBy]);
 
   const categories = [
-    { value: "all", label: "Todos", count: projects.length },
-    { value: "social", label: "Social", count: projects.filter(p => p.category === "social").length },
-    { value: "environmental", label: "Ambiental", count: projects.filter(p => p.category === "environmental").length },
-    { value: "educational", label: "Educativo", count: projects.filter(p => p.category === "educational").length },
+    { value: "all", label: t('todos'), count: projects.length },
+    { value: "social", label: t('social'), count: projects.filter(p => p.category === "social").length },
+    { value: "environmental", label: t('ambiental'), count: projects.filter(p => p.category === "environmental").length },
+    { value: "educational", label: t('educativo'), count: projects.filter(p => p.category === "educational").length },
   ];
 
   return (
@@ -105,9 +107,9 @@ const Proyectos = () => {
         <main className="flex-1 container px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
           {/* Header Section */}
           <div className="mb-6 sm:mb-8">
-            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-2">{t('proyectos_title')}</h1>
+            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-2">{t('proyectos_page_title')}</h1>
             <p className="text-sm sm:text-base text-muted-foreground">
-              Encuentra proyectos de voluntariado que se ajusten a tus intereses y disponibilidad
+              {t('proyectos_page_desc')}
             </p>
           </div>
 
@@ -262,7 +264,7 @@ const Proyectos = () => {
           {/* Results Count */}
           <div className="mb-4 flex items-center justify-between">
             <p className="text-sm text-muted-foreground">
-              {filteredProjects.length} {filteredProjects.length === 1 ? 'proyecto encontrado' : 'proyectos encontrados'}
+              {filteredProjects.length} {filteredProjects.length === 1 ? t('proyecto_encontrado') : t('proyectos_encontrados')}
             </p>
           </div>
 
@@ -274,7 +276,20 @@ const Proyectos = () => {
                 : "space-y-4"
             }>
               {filteredProjects.map(project => (
-                <ProjectCard key={project.id} {...project} />
+                <ProjectCard 
+                  key={project.id}
+                  id={project.id}
+                  title={getProjectTitle(project, locale)}
+                  description={getProjectDescription(project, locale)}
+                  category={project.category}
+                  hours={project.hours}
+                  participants={project.participants}
+                  location={project.location}
+                  image={project.image}
+                  date={project.date}
+                  status={project.status}
+                  isOpenForEnrollment={project.isOpenForEnrollment}
+                />
               ))}
             </div>
           ) : (
@@ -282,9 +297,9 @@ const Proyectos = () => {
               <div className="inline-flex h-16 w-16 items-center justify-center rounded-full bg-muted mb-4">
                 <Search className="h-8 w-8 text-muted-foreground" />
               </div>
-              <h3 className="text-lg font-semibold mb-2">No se encontraron proyectos</h3>
+              <h3 className="text-lg font-semibold mb-2">{t('no_proyectos_encontrados')}</h3>
               <p className="text-sm text-muted-foreground mb-4">
-                Intenta ajustar los filtros o la búsqueda
+                {t('ajustar_filtros')}
               </p>
               <Button
                 variant="outline"
@@ -294,7 +309,7 @@ const Proyectos = () => {
                   setSelectedLocation("all");
                 }}
               >
-                Limpiar filtros
+                {t('limpiar_filtros')}
               </Button>
             </div>
           )}

@@ -52,15 +52,19 @@ const Configuracion = () => {
 
   // Estados para notificaciones
   const [emailNotifications, setEmailNotifications] = useState(false);
-  const [projectNotifications, setProjectNotifications] = useState(true);
-  const [reminderNotifications, setReminderNotifications] = useState(false);
-
-  // Estados para accesibilidad
-  const [visualAlerts, setVisualAlerts] = useState(() => {
-    const saved = localStorage.getItem('visualAlerts');
+  const [projectNotifications, setProjectNotifications] = useState(() => {
+    const saved = localStorage.getItem('projectNotifications');
     return saved !== null ? saved === 'true' : true; // Por defecto activado
   });
-  const [voiceReading, setVoiceReading] = useState(false);
+  const [reminderNotifications, setReminderNotifications] = useState(() => {
+    const saved = localStorage.getItem('reminderNotifications');
+    return saved !== null ? saved === 'true' : true; // Por defecto activado
+  });
+
+  // Estados para accesibilidad
+  const [voiceReading, setVoiceReading] = useState(() => {
+    return localStorage.getItem('voiceReading') === 'true';
+  });
   const [highContrast, setHighContrast] = useState(() => {
     return localStorage.getItem('highContrast') === 'true';
   });
@@ -101,15 +105,6 @@ const Configuracion = () => {
       document.documentElement.classList.remove('large-text');
     }
   }, [largeText]);
-
-  // Aplicar alertas visuales
-  useEffect(() => {
-    if (visualAlerts) {
-      document.documentElement.classList.add('visual-alerts');
-    } else {
-      document.documentElement.classList.remove('visual-alerts');
-    }
-  }, [visualAlerts]);
 
   // Manejo cambio de contraseña
   const handlePasswordChange = (field: string, value: string) => {
@@ -259,13 +254,36 @@ const Configuracion = () => {
     });
   };
 
-  const handleToggleVisualAlerts = (checked: boolean) => {
-    setVisualAlerts(checked);
-    localStorage.setItem('visualAlerts', checked.toString());
+  const handleToggleVoiceReading = (checked: boolean) => {
+    setVoiceReading(checked);
+    localStorage.setItem('voiceReading', checked.toString());
+    
+    // Disparar evento personalizado para que SelectionReader se actualice
+    window.dispatchEvent(new Event('voiceReadingChanged'));
     
     toast({
-      title: checked ? "Alertas visuales activadas" : "Alertas visuales desactivadas",
-      description: checked ? "Verás notificaciones visuales en lugar de sonidos." : "Se restauraron las notificaciones normales.",
+      title: checked ? "Lectura por voz activada" : "Lectura por voz desactivada",
+      description: checked ? "Selecciona texto para escucharlo en voz alta." : "La lectura automática está deshabilitada.",
+    });
+  };
+
+  const handleToggleProjectNotifications = (checked: boolean) => {
+    setProjectNotifications(checked);
+    localStorage.setItem('projectNotifications', checked.toString());
+    
+    toast({
+      title: checked ? "Notificaciones de proyectos activadas" : "Notificaciones de proyectos desactivadas",
+      description: checked ? "Recibirás avisos sobre nuevos proyectos." : "No recibirás avisos sobre nuevos proyectos.",
+    });
+  };
+
+  const handleToggleReminderNotifications = (checked: boolean) => {
+    setReminderNotifications(checked);
+    localStorage.setItem('reminderNotifications', checked.toString());
+    
+    toast({
+      title: checked ? "Recordatorios activados" : "Recordatorios desactivados",
+      description: checked ? "Recibirás recordatorios de eventos y actividades." : "No recibirás recordatorios.",
     });
   };
 
@@ -278,9 +296,9 @@ const Configuracion = () => {
           
           {/* Encabezado */}
           <div>
-            <h1 className="text-3xl font-bold">Configuración</h1>
+            <h1 className="text-3xl font-bold">{t('configuracion_title')}</h1>
             <p className="text-muted-foreground mt-1">
-              Administra tus preferencias y seguridad de la cuenta
+              {t('configuracion_desc')}
             </p>
           </div>
 
@@ -437,7 +455,7 @@ const Configuracion = () => {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Bell className="h-5 w-5" />
-                Notificaciones
+                {t('preferencias_notificaciones')}
               </CardTitle>
               <CardDescription>
                 Administra cómo y cuándo recibes notificaciones
@@ -461,14 +479,14 @@ const Configuracion = () => {
               
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
-                  <Label className="text-base">Nuevos Proyectos</Label>
+                  <Label className="text-base">{t('notif_nuevos_proyectos')}</Label>
                   <p className="text-sm text-muted-foreground">
-                    Avisos sobre proyectos en tu área
+                    {t('notif_nuevos_proyectos_desc')}
                   </p>
                 </div>
                 <Switch
                   checked={projectNotifications}
-                  onCheckedChange={setProjectNotifications}
+                  onCheckedChange={handleToggleProjectNotifications}
                 />
               </div>
               
@@ -476,14 +494,14 @@ const Configuracion = () => {
               
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
-                  <Label className="text-base">Recordatorios</Label>
+                  <Label className="text-base">{t('notif_recordatorios')}</Label>
                   <p className="text-sm text-muted-foreground">
-                    Recordatorios de eventos y actividades
+                    {t('notif_recordatorios_desc')}
                   </p>
                 </div>
                 <Switch
                   checked={reminderNotifications}
-                  onCheckedChange={setReminderNotifications}
+                  onCheckedChange={handleToggleReminderNotifications}
                 />
               </div>
             </CardContent>
@@ -494,7 +512,7 @@ const Configuracion = () => {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Eye className="h-5 w-5" />
-                Accesibilidad
+                {t('preferencias_accesibilidad')}
               </CardTitle>
               <CardDescription>
                 Opciones para mejorar tu experiencia de uso
@@ -503,35 +521,17 @@ const Configuracion = () => {
             <CardContent className="space-y-4">
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5 flex items-center gap-2">
-                  <Eye className="h-4 w-4 text-muted-foreground" />
-                  <div>
-                    <Label className="text-base">Alertas Visuales</Label>
-                    <p className="text-sm text-muted-foreground">
-                      Notificaciones visuales en lugar de sonidos
-                    </p>
-                  </div>
-                </div>
-                <Switch
-                  checked={visualAlerts}
-                  onCheckedChange={handleToggleVisualAlerts}
-                />
-              </div>
-              
-              <Separator />
-              
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5 flex items-center gap-2">
                   <Volume2 className="h-4 w-4 text-muted-foreground" />
                   <div>
-                    <Label className="text-base">Lectura por Voz</Label>
+                    <Label className="text-base">{t('lectura_voz')}</Label>
                     <p className="text-sm text-muted-foreground">
-                      Lee el contenido en voz alta
+                      {t('lectura_voz_desc')}
                     </p>
                   </div>
                 </div>
                 <Switch
                   checked={voiceReading}
-                  onCheckedChange={setVoiceReading}
+                  onCheckedChange={handleToggleVoiceReading}
                 />
               </div>
               
@@ -541,9 +541,9 @@ const Configuracion = () => {
                 <div className="space-y-0.5 flex items-center gap-2">
                   <Contrast className="h-4 w-4 text-muted-foreground" />
                   <div>
-                    <Label className="text-base">Alto Contraste</Label>
+                    <Label className="text-base">{t('alto_contraste')}</Label>
                     <p className="text-sm text-muted-foreground">
-                      Aumenta el contraste para mejor visibilidad
+                      {t('alto_contraste_desc')}
                     </p>
                   </div>
                 </div>
@@ -559,9 +559,9 @@ const Configuracion = () => {
                 <div className="space-y-0.5 flex items-center gap-2">
                   <Type className="h-4 w-4 text-muted-foreground" />
                   <div>
-                    <Label className="text-base">Texto Ampliado</Label>
+                    <Label className="text-base">{t('texto_ampliado')}</Label>
                     <p className="text-sm text-muted-foreground">
-                      Aumenta el tamaño del texto
+                      {t('texto_ampliado_desc')}
                     </p>
                   </div>
                 </div>

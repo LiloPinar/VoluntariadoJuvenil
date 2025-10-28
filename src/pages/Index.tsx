@@ -9,11 +9,12 @@ import { Card, CardContent } from "@/components/ui/card";
 import { ArrowRight, TrendingUp, Users, Award } from "lucide-react";
 import heroImage from "@/assets/hero-volunteering.jpg";
 import { useLocale } from "@/i18n/LocaleContext";
-import { allProjects } from "@/data/projects";
+import { allProjects, getProjectTitle, getProjectDescription } from "@/data/projects";
 
 const Index = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const navigate = useNavigate();
+  const { t, locale } = useLocale();
 
   // Scroll al top cuando se carga la página
   useEffect(() => {
@@ -47,8 +48,6 @@ const Index = () => {
     },
   ];
 
-  const { t } = useLocale();
-
   return (
     <div className="flex min-h-screen flex-col">
       <Header
@@ -67,17 +66,17 @@ const Index = () => {
               alt="Jóvenes voluntarios trabajando juntos"
               className="absolute inset-0 h-full w-full object-cover"
             />
-            <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/70 to-black/30 dark:from-black/90 dark:via-black/75" />
+            <div className="absolute inset-0 bg-gradient-to-r from-white/95 via-white/60 to-transparent dark:from-slate-900/95 dark:via-slate-900/60" />
             <div className="container relative flex h-full items-center px-4 sm:px-6 lg:px-8">
               <div className="max-w-3xl space-y-4 sm:space-y-6">
-                <h1 className="text-3xl font-bold leading-tight text-white sm:text-4xl md:text-5xl lg:text-6xl drop-shadow-2xl">
+                <h1 className="text-3xl font-bold leading-tight text-gray-900 dark:text-white sm:text-4xl md:text-5xl lg:text-6xl">
                   {t('home_title')}
                 </h1>
                 <div className="space-y-3 sm:space-y-4">
-                  <p className="text-base sm:text-lg text-white md:text-xl drop-shadow-xl font-medium">
+                  <p className="text-base sm:text-lg text-gray-800 dark:text-gray-100 md:text-xl font-semibold">
                     {t('home_sub')}
                   </p>
-                  <p className="text-sm sm:text-base text-white/95 leading-relaxed drop-shadow-lg max-w-2xl font-light">
+                  <p className="text-sm sm:text-base text-gray-700 dark:text-gray-200 leading-relaxed max-w-2xl font-normal">
                     {t('home_description')}
                   </p>
                 </div>
@@ -134,7 +133,20 @@ const Index = () => {
 
               <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
                 {featuredProjects.map((project) => (
-                  <ProjectCard key={project.id} {...project} />
+                  <ProjectCard 
+                    key={project.id}
+                    id={project.id}
+                    title={getProjectTitle(project, locale)}
+                    description={getProjectDescription(project, locale)}
+                    category={project.category}
+                    hours={project.hours}
+                    participants={project.participants}
+                    location={project.location}
+                    image={project.image}
+                    date={project.date}
+                    status={project.status}
+                    isOpenForEnrollment={project.isOpenForEnrollment}
+                  />
                 ))}
               </div>
 

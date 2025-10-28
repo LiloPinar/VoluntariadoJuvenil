@@ -11,7 +11,8 @@ import { EnrollmentStatusStepper } from '@/components/EnrollmentStatusStepper';
 import { ProjectActivities } from '@/components/ProjectActivities';
 import { useAuthContext } from '@/contexts/AuthContext';
 import { useProjectContext } from '@/contexts/ProjectContext';
-import { allProjects } from '@/data/projects';
+import { allProjects, getProjectTitle, getProjectDescription } from '@/data/projects';
+import { useLocale } from '@/i18n/LocaleContext';
 import {
   Calendar,
   Clock,
@@ -41,9 +42,9 @@ const categoryColors = {
 };
 
 const categoryLabels = {
-  social: 'Social',
-  environmental: 'Ambiental',
-  educational: 'Educativo',
+  social: 'social',
+  environmental: 'ambiental',
+  educational: 'educativo',
 };
 
 const DetalleProyecto = () => {
@@ -52,6 +53,7 @@ const DetalleProyecto = () => {
   const { isAuthenticated, user } = useAuthContext();
   const { isEnrolled: checkEnrolled, getEnrollmentStatus, unenrollProject, enrolledProjects } = useProjectContext();
   const { toast } = useToast();
+  const { t, locale } = useLocale();
   
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [showEnrollmentDialog, setShowEnrollmentDialog] = useState(false);
@@ -100,8 +102,8 @@ const DetalleProyecto = () => {
     // Validar que las inscripciones estén abiertas
     if (!project.isOpenForEnrollment && project.isOpenForEnrollment !== undefined) {
       toast({
-        title: 'Inscripciones cerradas',
-        description: 'Este proyecto ya no acepta nuevas inscripciones en este momento.',
+        title: t('inscripciones_cerradas'),
+        description: t('inscripciones_cerradas_desc'),
         variant: 'destructive',
       });
       return;
@@ -174,7 +176,7 @@ const DetalleProyecto = () => {
             className="mb-6"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Volver
+            {t('volver_proyectos')}
           </Button>
 
           {/* Estado de inscripción (si está inscrito) */}
@@ -200,12 +202,12 @@ const DetalleProyecto = () => {
                 />
                 <div className="absolute top-4 left-4 flex gap-2">
                   <Badge className={categoryColors[project.category]}>
-                    {categoryLabels[project.category]}
+                    {t(categoryLabels[project.category])}
                   </Badge>
                   {project.status === 'completed' && (
                     <Badge variant="secondary">
                       <CheckCircle2 className="h-3 w-3 mr-1" />
-                      Completado
+                      {t('completado')}
                     </Badge>
                   )}
                   {enrollmentStatus && (
@@ -220,10 +222,10 @@ const DetalleProyecto = () => {
                       }
                     >
                       {enrollmentStatus === 'pending'
-                        ? 'Pendiente'
+                        ? t('pendiente')
                         : enrollmentStatus === 'approved'
-                        ? 'Aprobado'
-                        : 'Rechazado'}
+                        ? t('aprobado')
+                        : t('rechazado')}
                     </Badge>
                   )}
                 </div>
@@ -232,10 +234,10 @@ const DetalleProyecto = () => {
               {/* Título y descripción */}
               <div>
                 <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-3 sm:mb-4 text-foreground">
-                  {project.title}
+                  {getProjectTitle(project, locale)}
                 </h1>
                 <p className="text-base sm:text-lg text-muted-foreground leading-relaxed">
-                  {project.description}
+                  {getProjectDescription(project, locale)}
                 </p>
               </div>
 
@@ -247,12 +249,10 @@ const DetalleProyecto = () => {
                       <AlertCircle className="h-5 w-5 sm:h-6 sm:w-6 text-orange-600 dark:text-orange-500 flex-shrink-0 mt-0.5" />
                       <div className="flex-1">
                         <h3 className="font-semibold text-orange-900 dark:text-orange-100 mb-2">
-                          Inscripciones Cerradas
+                          {t('inscripciones_cerradas_titulo')}
                         </h3>
                         <p className="text-sm sm:text-base text-orange-800 dark:text-orange-200">
-                          Este proyecto actualmente no está aceptando nuevas inscripciones. 
-                          Las inscripciones podrían abrirse nuevamente en el futuro. 
-                          Te recomendamos explorar otros proyectos disponibles.
+                          {t('inscripciones_cerradas_desc')}
                         </p>
                       </div>
                     </div>
@@ -265,42 +265,35 @@ const DetalleProyecto = () => {
                 <CardContent className="p-4 sm:p-6">
                   <h2 className="text-xl sm:text-2xl font-semibold mb-3 sm:mb-4 flex items-center gap-2 text-foreground">
                     <Info className="h-5 w-5 sm:h-6 sm:w-6" />
-                    Sobre este proyecto
+                    {t('sobre_proyecto')}
                   </h2>
                   <div className="space-y-3 sm:space-y-4 text-sm sm:text-base text-muted-foreground">
                     <p>
-                      Este es un proyecto de voluntariado de la categoría{' '}
+                      {t('proyecto_descripcion_intro')}{' '}
                       <span className="font-semibold text-foreground">
-                        {categoryLabels[project.category]}
+                        {t(categoryLabels[project.category])}
                       </span>
-                      , diseñado para generar un impacto positivo en nuestra comunidad.
+                      , {t('proyecto_descripcion_intro2')}
                     </p>
                     <p>
-                      Durante este proyecto, los voluntarios tendrán la oportunidad de trabajar
-                      directamente con la comunidad local, desarrollando habilidades de trabajo en
-                      equipo, liderazgo y empatía.
+                      {t('proyecto_descripcion_oportunidad')}
                     </p>
                     <p>
-                      La experiencia incluye capacitación previa, materiales necesarios para las
-                      actividades, y certificado de participación al finalizar el proyecto con el
-                      número de horas completadas.
+                      {t('proyecto_descripcion_experiencia')}
                     </p>
                     {project.category === 'environmental' && (
                       <p>
-                        Contribuirás a la conservación del medio ambiente y aprenderás sobre
-                        prácticas sostenibles que puedes aplicar en tu vida diaria.
+                        {t('proyecto_descripcion_ambiental')}
                       </p>
                     )}
                     {project.category === 'educational' && (
                       <p>
-                        Apoyarás la educación y el desarrollo de habilidades en miembros de la
-                        comunidad, contribuyendo a su crecimiento personal y profesional.
+                        {t('proyecto_descripcion_educativo')}
                       </p>
                     )}
                     {project.category === 'social' && (
                       <p>
-                        Trabajarás directamente con grupos en situación de vulnerabilidad,
-                        brindando apoyo y generando un cambio significativo en sus vidas.
+                        {t('proyecto_descripcion_social')}
                       </p>
                     )}
                   </div>
@@ -320,24 +313,24 @@ const DetalleProyecto = () => {
               <Card className="border-border bg-card">
                 <CardContent className="p-4 sm:p-6">
                   <h2 className="text-xl sm:text-2xl font-semibold mb-3 sm:mb-4 text-foreground">
-                    Requisitos
+                    {t('requisitos')}
                   </h2>
                   <ul className="space-y-2 sm:space-y-3 text-sm sm:text-base text-muted-foreground">
                     <li className="flex items-start gap-2">
                       <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-green-600 dark:text-green-500 mt-0.5 flex-shrink-0" />
-                      <span>Mayor de 18 años o con autorización de padres/tutores</span>
+                      <span>{t('req_mayor_edad')}</span>
                     </li>
                     <li className="flex items-start gap-2">
                       <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-green-600 dark:text-green-500 mt-0.5 flex-shrink-0" />
-                      <span>Compromiso de asistencia puntual</span>
+                      <span>{t('req_asistencia')}</span>
                     </li>
                     <li className="flex items-start gap-2">
                       <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-green-600 dark:text-green-500 mt-0.5 flex-shrink-0" />
-                      <span>Actitud positiva y disposición para trabajar en equipo</span>
+                      <span>{t('req_actitud')}</span>
                     </li>
                     <li className="flex items-start gap-2">
                       <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-green-600 dark:text-green-500 mt-0.5 flex-shrink-0" />
-                      <span>Completar formulario de inscripción con documentación requerida</span>
+                      <span>{t('req_formulario')}</span>
                     </li>
                   </ul>
                 </CardContent>
@@ -349,7 +342,7 @@ const DetalleProyecto = () => {
               <Card className="lg:sticky lg:top-6 border-border bg-card">
                 <CardContent className="p-4 sm:p-6 space-y-4 sm:space-y-6">
                   <h2 className="text-lg sm:text-xl font-semibold text-foreground border-b pb-3 border-border">
-                    Información del Proyecto
+                    {t('detalles_proyecto')}
                   </h2>
 
                   <div className="space-y-4">
@@ -358,7 +351,7 @@ const DetalleProyecto = () => {
                         <Calendar className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
                       </div>
                       <div className="flex-1">
-                        <p className="text-xs sm:text-sm text-muted-foreground">Fecha</p>
+                        <p className="text-xs sm:text-sm text-muted-foreground">{t('fecha_inicio')}</p>
                         <p className="font-medium text-sm sm:text-base text-foreground">
                           {new Date(project.date).toLocaleDateString('es-ES', {
                             day: 'numeric',
@@ -374,9 +367,9 @@ const DetalleProyecto = () => {
                         <Clock className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
                       </div>
                       <div className="flex-1">
-                        <p className="text-xs sm:text-sm text-muted-foreground">Duración</p>
+                        <p className="text-xs sm:text-sm text-muted-foreground">{t('duracion')}</p>
                         <p className="font-medium text-sm sm:text-base text-foreground">
-                          {project.hours} horas
+                          {project.hours} {t('horas_requeridas')}
                         </p>
                       </div>
                     </div>
@@ -386,7 +379,7 @@ const DetalleProyecto = () => {
                         <Users className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
                       </div>
                       <div className="flex-1">
-                        <p className="text-xs sm:text-sm text-muted-foreground">Voluntarios</p>
+                        <p className="text-xs sm:text-sm text-muted-foreground">{t('voluntarios')}</p>
                         <p className="font-medium text-sm sm:text-base text-foreground">
                           {project.participants} participantes
                         </p>
@@ -398,7 +391,7 @@ const DetalleProyecto = () => {
                         <MapPin className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
                       </div>
                       <div className="flex-1">
-                        <p className="text-xs sm:text-sm text-muted-foreground">Ubicación</p>
+                        <p className="text-xs sm:text-sm text-muted-foreground">{t('ubicacion')}</p>
                         <p className="font-medium text-sm sm:text-base text-foreground">
                           {project.location}
                         </p>
@@ -420,16 +413,16 @@ const DetalleProyecto = () => {
                       variant={isEnrolled && isAuthenticated ? 'outline' : 'default'}
                     >
                       {isLoading
-                        ? 'Procesando...'
+                        ? t('procesando')
                         : enrollmentStatus === 'pending'
-                        ? 'Solicitud Pendiente'
+                        ? t('solicitud_pendiente')
                         : enrollmentStatus === 'rejected'
-                        ? 'Solicitud Rechazada'
+                        ? t('rechazado')
                         : !(project.isOpenForEnrollment ?? true) && !isEnrolled
-                        ? 'Inscripciones Cerradas'
+                        ? t('inscripciones_cerradas')
                         : isEnrolled && isAuthenticated
-                        ? 'Cancelar inscripción'
-                        : 'Inscribirse'}
+                        ? t('cancelar_inscripcion')
+                        : t('inscribirse_ahora')}
                     </Button>
                     
                     {/* Mensaje cuando las inscripciones están cerradas */}
@@ -453,7 +446,7 @@ const DetalleProyecto = () => {
           open={showEnrollmentDialog}
           onOpenChange={setShowEnrollmentDialog}
           projectId={projectId}
-          projectTitle={project.title}
+          projectTitle={getProjectTitle(project, locale)}
           userId={user.email}
         />
       )}
@@ -463,19 +456,19 @@ const DetalleProyecto = () => {
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2">
               <Info className="h-5 w-5" />
-              Completa tu perfil
+              {t('completa_perfil')}
             </AlertDialogTitle>
             <AlertDialogDescription className="text-sm sm:text-base">
-              Para inscribirte en un proyecto, primero debes completar tu información de perfil:
+              {t('completa_perfil_desc')}
               <ul className="mt-2 list-disc list-inside space-y-1">
-                {!user?.phone && <li>Número de teléfono</li>}
-                {!user?.location && <li>Ubicación</li>}
-                {!user?.birthDate && <li>Fecha de nacimiento</li>}
+                {!user?.phone && <li>{t('numero_telefono')}</li>}
+                {!user?.location && <li>{t('ubicacion_field')}</li>}
+                {!user?.birthDate && <li>{t('fecha_nacimiento')}</li>}
               </ul>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="flex-col sm:flex-row gap-2">
-            <AlertDialogCancel className="w-full sm:w-auto">Cancelar</AlertDialogCancel>
+            <AlertDialogCancel className="w-full sm:w-auto">{t('cancelar')}</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => {
                 setShowProfileIncompleteDialog(false);
@@ -483,7 +476,7 @@ const DetalleProyecto = () => {
               }}
               className="w-full sm:w-auto"
             >
-              Ir a mi perfil
+              {t('ir_perfil')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -494,14 +487,14 @@ const DetalleProyecto = () => {
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2">
               <Info className="h-5 w-5" />
-              Autenticación requerida
+              {t('autenticacion_requerida')}
             </AlertDialogTitle>
             <AlertDialogDescription className="text-sm sm:text-base">
-              Debes iniciar sesión o crear una cuenta para inscribirte en proyectos de voluntariado.
+              {t('autenticacion_requerida_desc')}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="flex-col sm:flex-row gap-2">
-            <AlertDialogCancel className="w-full sm:w-auto">Cancelar</AlertDialogCancel>
+            <AlertDialogCancel className="w-full sm:w-auto">{t('cancelar')}</AlertDialogCancel>
             <Button
               onClick={() => {
                 setShowAuthDialog(false);
@@ -510,7 +503,7 @@ const DetalleProyecto = () => {
               variant="outline"
               className="w-full sm:w-auto"
             >
-              Crear cuenta
+              {t('crear_cuenta')}
             </Button>
             <AlertDialogAction
               onClick={() => {
@@ -519,7 +512,7 @@ const DetalleProyecto = () => {
               }}
               className="w-full sm:w-auto"
             >
-              Iniciar sesión
+              {t('login_button')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

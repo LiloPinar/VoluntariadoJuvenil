@@ -19,6 +19,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { useLocale } from '@/i18n/LocaleContext';
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuthContext } from "@/contexts/AuthContext";
@@ -48,9 +49,9 @@ const categoryColors = {
 };
 
 const categoryLabels = {
-  social: "Social",
-  environmental: "Ambiental",
-  educational: "Educativo",
+  social: "social",
+  environmental: "ambiental",
+  educational: "educativo",
 };
 
 export const ProjectCard = ({
@@ -75,6 +76,7 @@ export const ProjectCard = ({
   const { isAuthenticated, user } = useAuthContext();
   const { isEnrolled: checkEnrolled, getEnrollmentStatus, unenrollProject } = useProjectContext();
   const navigate = useNavigate();
+  const { t, locale } = useLocale();
 
   // Verificar si el usuario está inscrito usando el contexto
   const isEnrolled = id ? checkEnrolled(id, user?.email) : false;
@@ -102,8 +104,8 @@ export const ProjectCard = ({
     // Validar que las inscripciones estén abiertas
     if (!isOpenForEnrollment) {
       toast({
-        title: 'Inscripciones cerradas',
-        description: 'Este proyecto ya no acepta nuevas inscripciones en este momento.',
+        title: t('inscripciones_cerradas'),
+        description: t('inscripciones_cerradas_desc'),
         variant: 'destructive',
       });
       return;
@@ -132,8 +134,8 @@ export const ProjectCard = ({
     setIsLoading(false);
     
     toast({
-      title: "Inscripción cancelada",
-      description: "Te has dado de baja del proyecto",
+      title: t('inscripcion_cancelada'),
+      description: t('inscripcion_cancelada_desc'),
       variant: "default",
     });
   };
@@ -150,7 +152,8 @@ export const ProjectCard = ({
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('es-ES', { 
+    const localeCode = locale === 'en' ? 'en-US' : 'es-ES';
+    return date.toLocaleDateString(localeCode, { 
       day: 'numeric', 
       month: 'short', 
       year: 'numeric' 
@@ -178,7 +181,7 @@ export const ProjectCard = ({
           <Badge
             className={`absolute right-3 top-3 sm:right-4 sm:top-4 text-xs ${categoryColors[category]}`}
           >
-            {categoryLabels[category]}
+            {t(categoryLabels[category])}
           </Badge>
           {isEnrolled && isAuthenticated && (
             <Badge
@@ -191,9 +194,9 @@ export const ProjectCard = ({
               } text-white`}
             >
               <CheckCircle2 className="h-3 w-3 mr-1" />
-              {enrollmentStatus === 'pending' && 'Pendiente'}
-              {enrollmentStatus === 'approved' && 'Aprobado'}
-              {enrollmentStatus === 'rejected' && 'Rechazado'}
+              {enrollmentStatus === 'pending' && t('pendiente')}
+              {enrollmentStatus === 'approved' && t('aprobado')}
+              {enrollmentStatus === 'rejected' && t('rechazado')}
             </Badge>
           )}
           {!isOpenForEnrollment && !isEnrolled && (
@@ -201,7 +204,7 @@ export const ProjectCard = ({
               className="absolute left-3 bottom-3 sm:left-4 sm:bottom-4 text-xs bg-orange-500 text-white"
             >
               <Lock className="h-3 w-3 mr-1" />
-              Inscripciones Cerradas
+              {t('inscripciones_cerradas')}
             </Badge>
           )}
         </div>
@@ -223,7 +226,7 @@ export const ProjectCard = ({
             </div>
             <div className="flex items-center gap-1">
               <Users className="h-3 w-3 sm:h-4 sm:w-4 shrink-0" />
-              <span>{participants} voluntarios</span>
+              <span>{participants} {t('voluntarios')}</span>
             </div>
             <div className="flex items-center gap-1">
               <MapPin className="h-3 w-3 sm:h-4 sm:w-4 shrink-0" />
@@ -247,17 +250,17 @@ export const ProjectCard = ({
             variant={isEnrolled && isAuthenticated ? "outline" : "default"}
           >
             {isLoading ? (
-              "Procesando..."
+              t('procesando')
             ) : enrollmentStatus === 'pending' ? (
-              "Solicitud Pendiente"
+              t('solicitud_pendiente')
             ) : enrollmentStatus === 'rejected' ? (
-              "Solicitud Rechazada"
+              t('rechazado')
             ) : !isOpenForEnrollment && !isEnrolled ? (
-              "Inscripciones Cerradas"
+              t('inscripciones_cerradas')
             ) : isEnrolled && isAuthenticated ? (
-              "Cancelar inscripción"
+              t('cancelar_inscripcion')
             ) : (
-              "Inscribirse"
+              t('inscribirse')
             )}
           </Button>
         </CardFooter>

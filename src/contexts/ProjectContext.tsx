@@ -1,4 +1,6 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { notifyEnrollmentApproved, notifyEnrollmentRejected } from '@/lib/notificationHelpers';
+import { allProjects } from '@/data/projects';
 
 export type EnrollmentStatus = 'pending' | 'approved' | 'rejected';
 
@@ -137,6 +139,12 @@ export const ProjectProvider = ({ children }: { children: ReactNode }) => {
           : enrollment
       )
     );
+
+    // Enviar notificación al usuario
+    const project = allProjects.find(p => p.id === projectId);
+    if (project) {
+      notifyEnrollmentApproved(userId, project.title, projectId.toString());
+    }
   };
 
   // Rechazar una inscripción
@@ -154,6 +162,12 @@ export const ProjectProvider = ({ children }: { children: ReactNode }) => {
           : enrollment
       )
     );
+
+    // Enviar notificación al usuario
+    const project = allProjects.find(p => p.id === projectId);
+    if (project) {
+      notifyEnrollmentRejected(userId, project.title, projectId.toString(), reason);
+    }
   };
 
   return (

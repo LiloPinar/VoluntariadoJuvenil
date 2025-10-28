@@ -28,6 +28,7 @@ import { useAuthContext } from '@/contexts/AuthContext';
 import { useProjectContext } from '@/contexts/ProjectContext';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
+import { notifyGoalCompleted } from '@/lib/notificationHelpers';
 import {
   CheckCircle2,
   Clock,
@@ -153,6 +154,17 @@ const ActivityValidation = () => {
     setShowValidationDialog(false);
     setSelectedActivity(null);
     setSelectedUsers([]);
+
+    // Enviar notificación a cada usuario que completó la actividad
+    selectedUsers.forEach(userId => {
+      notifyGoalCompleted(
+        userId,
+        activity.name,
+        project.title,
+        project.id.toString(),
+        activity.hours || 2
+      );
+    });
 
     toast({
       title: 'Actividad validada',

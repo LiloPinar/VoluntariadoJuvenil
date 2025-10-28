@@ -18,7 +18,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Calendar, Clock, MapPin, Search, BookmarkCheck, Filter } from "lucide-react";
-import { allProjects } from "@/data/projects";
+import { allProjects, getProjectTitle, getProjectDescription } from "@/data/projects";
 import { useProjectContext, EnrollmentStatus } from "@/contexts/ProjectContext";
 
 type SortBy = "recent" | "hours-asc" | "hours-desc" | "date-asc" | "date-desc";
@@ -28,7 +28,7 @@ const MisProyectos = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [sortBy, setSortBy] = useState<SortBy>("recent");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const { isAuthenticated, user } = useAuthContext();
   const { getUserEnrolledProjects, enrolledProjects } = useProjectContext();
   const navigate = useNavigate();
@@ -162,10 +162,10 @@ const MisProyectos = () => {
           <div className="mb-6 sm:mb-8">
             <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-2 flex items-center gap-2">
               <BookmarkCheck className="h-6 w-6 sm:h-8 sm:w-8" />
-              Mis Proyectos
+              {t('mis_proyectos_title')}
             </h1>
             <p className="text-sm sm:text-base text-muted-foreground">
-              Proyectos de voluntariado en los que estás inscrito
+              {t('mis_proyectos_desc')}
             </p>
           </div>
 
@@ -190,7 +190,7 @@ const MisProyectos = () => {
                 </div>
                 <div>
                   <p className="text-2xl sm:text-3xl font-bold">{approvedProjects}</p>
-                  <p className="text-xs sm:text-sm text-muted-foreground">Aprobados</p>
+                  <p className="text-xs sm:text-sm text-muted-foreground">{t('aprobados')}</p>
                 </div>
               </div>
             </div>
@@ -202,7 +202,7 @@ const MisProyectos = () => {
                 </div>
                 <div>
                   <p className="text-2xl sm:text-3xl font-bold">{pendingProjects}</p>
-                  <p className="text-xs sm:text-sm text-muted-foreground">Pendientes</p>
+                  <p className="text-xs sm:text-sm text-muted-foreground">{t('pendientes')}</p>
                 </div>
               </div>
             </div>
@@ -216,7 +216,7 @@ const MisProyectos = () => {
                   <p className="text-2xl sm:text-3xl font-bold">
                     {nextProject ? new Date(nextProject.date).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' }) : '-'}
                   </p>
-                  <p className="text-xs sm:text-sm text-muted-foreground">Próximo proyecto</p>
+                  <p className="text-xs sm:text-sm text-muted-foreground">{t('proximo_proyecto')}</p>
                 </div>
               </div>
             </div>
@@ -240,15 +240,15 @@ const MisProyectos = () => {
                     </div>
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">Todos los estados</SelectItem>
+                    <SelectItem value="all">{t('todos_proyectos')}</SelectItem>
                     <SelectItem value="pending">
                       <span className="flex items-center gap-2">
-                        <Badge variant="secondary" className="bg-yellow-100 text-yellow-800 hover:bg-yellow-100">Pendientes</Badge>
+                        <Badge variant="secondary" className="bg-yellow-100 text-yellow-800 hover:bg-yellow-100">{t('pendientes')}</Badge>
                       </span>
                     </SelectItem>
                     <SelectItem value="approved">
                       <span className="flex items-center gap-2">
-                        <Badge variant="secondary" className="bg-green-100 text-green-800 hover:bg-green-100">Aprobados</Badge>
+                        <Badge variant="secondary" className="bg-green-100 text-green-800 hover:bg-green-100">{t('aprobados')}</Badge>
                       </span>
                     </SelectItem>
                     <SelectItem value="rejected">
@@ -314,7 +314,20 @@ const MisProyectos = () => {
                     </Card>
                     
                     {/* Tarjeta del proyecto */}
-                    <ProjectCard {...project} />
+                    <ProjectCard 
+                      id={project.id}
+                      title={getProjectTitle(project, locale)}
+                      description={getProjectDescription(project, locale)}
+                      category={project.category}
+                      hours={project.hours}
+                      participants={project.participants}
+                      location={project.location}
+                      image={project.image}
+                      date={project.date}
+                      status={project.status}
+                      isOpenForEnrollment={project.isOpenForEnrollment}
+                      enrolled={!!enrollment}
+                    />
                   </div>
                 );
               })}

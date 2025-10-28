@@ -31,6 +31,7 @@ import {
 } from "@/components/ui/select";
 import { useLocale } from "@/i18n/LocaleContext";
 import { useAuthContext } from "@/contexts/AuthContext";
+import { useNotifications, getRelativeTime } from "@/contexts/NotificationContext";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -64,26 +65,10 @@ const navItems = [
 
 export const Header = ({ currentPage, onMenuClick }: HeaderProps) => {
   const [showShortcuts, setShowShortcuts] = useState(false);
-  const [notifications, setNotifications] = useState([
-    { id: 1, title: "Nuevo Proyecto: Limpieza de Playas", message: "Se ha publicado un nuevo proyecto ambiental", time: "Hace 5 min", unread: true },
-    { id: 2, title: "Proyecto Actualizado", message: "Apoyo Educativo tiene nuevas plazas disponibles", time: "Hace 1 hora", unread: true },
-    { id: 3, title: "Recordatorio", message: "Tienes un proyecto próximo este fin de semana", time: "Hace 3 horas", unread: false },
-  ]);
   const { locale, t, setLocale } = useLocale();
   const { user, isAuthenticated, logout } = useAuthContext();
+  const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
   const navigate = useNavigate();
-
-  const unreadCount = notifications.filter(n => n.unread).length;
-
-  const markAsRead = (id: number) => {
-    setNotifications(prev => 
-      prev.map(n => n.id === id ? { ...n, unread: false } : n)
-    );
-  };
-
-  const markAllAsRead = () => {
-    setNotifications(prev => prev.map(n => ({ ...n, unread: false })));
-  };
 
   // Filtrar navItems según autenticación
   const visibleNavItems = navItems.filter(item => {
@@ -179,7 +164,7 @@ export const Header = ({ currentPage, onMenuClick }: HeaderProps) => {
                   : item.label === 'Proyectos' 
                   ? t('proyectos') 
                   : item.label === 'Mis Proyectos'
-                  ? 'Mis Proyectos'
+                  ? t('mis_proyectos')
                   : item.label === 'Mis Horas' 
                   ? t('mis_horas') 
                   : t('comunidad')}
@@ -203,78 +188,80 @@ export const Header = ({ currentPage, onMenuClick }: HeaderProps) => {
         {/* Buscador Global */}
         <GlobalSearch />
 
-        {/* Botón de Notificaciones */}
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button 
-              variant="ghost" 
-              size="icon"
-              className="relative h-9 w-9"
-              aria-label="Notificaciones"
-            >
-              <Bell className="h-5 w-5" />
-              {unreadCount > 0 && (
-                <Badge 
-                  variant="destructive" 
-                  className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-[10px]"
-                >
-                  {unreadCount}
-                </Badge>
-              )}
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-80 p-0" align="end">
-            <div className="flex items-center justify-between border-b p-4">
-              <h3 className="font-semibold">{t('notifications')}</h3>
-              {unreadCount > 0 && (
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  onClick={markAllAsRead}
-                  className="h-8 text-xs"
-                >
-                  {t('mark_all_read')}
-                </Button>
-              )}
-            </div>
-            <div className="max-h-[400px] overflow-y-auto">
-              {notifications.length === 0 ? (
-                <div className="p-8 text-center text-sm text-muted-foreground">
-                  {t('no_notifications')}
-                </div>
-              ) : (
-                notifications.map((notification) => (
-                  <div
-                    key={notification.id}
-                    className={`border-b p-4 hover:bg-muted/50 cursor-pointer transition-colors ${
-                      notification.unread ? 'bg-primary/5' : ''
-                    }`}
-                    onClick={() => markAsRead(notification.id)}
+        {/* Botón de Notificaciones - Solo para usuarios autenticados */}
+        {isAuthenticated && (
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button 
+                variant="ghost" 
+                size="icon"
+                className="relative h-9 w-9"
+                aria-label="Notificaciones"
+              >
+                <Bell className="h-5 w-5" />
+                {unreadCount > 0 && (
+                  <Badge 
+                    variant="destructive" 
+                    className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-[10px]"
                   >
-                    <div className="flex items-start gap-3">
-                      <div className="flex-1 space-y-1">
-                        <div className="flex items-center gap-2">
-                          <p className="text-sm font-medium leading-none">
-                            {notification.title}
+                    {unreadCount}
+                  </Badge>
+                )}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-80 p-0" align="end">
+              <div className="flex items-center justify-between border-b p-4">
+                <h3 className="font-semibold">{t('notifications')}</h3>
+                {unreadCount > 0 && (
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={markAllAsRead}
+                    className="h-8 text-xs"
+                  >
+                    {t('mark_all_read')}
+                  </Button>
+                )}
+              </div>
+              <div className="max-h-[400px] overflow-y-auto">
+                {notifications.length === 0 ? (
+                  <div className="p-8 text-center text-sm text-muted-foreground">
+                    {t('no_notifications')}
+                  </div>
+                ) : (
+                  notifications.map((notification) => (
+                    <div
+                      key={notification.id}
+                      className={`border-b p-4 hover:bg-muted/50 cursor-pointer transition-colors ${
+                        !notification.read ? 'bg-primary/5' : ''
+                      }`}
+                      onClick={() => markAsRead(notification.id)}
+                    >
+                      <div className="flex items-start gap-3">
+                        <div className="flex-1 space-y-1">
+                          <div className="flex items-center gap-2">
+                            <p className="text-sm font-medium leading-none">
+                              {notification.title}
+                            </p>
+                            {!notification.read && (
+                              <div className="h-2 w-2 rounded-full bg-primary" />
+                            )}
+                          </div>
+                          <p className="text-xs text-muted-foreground">
+                            {notification.message}
                           </p>
-                          {notification.unread && (
-                            <div className="h-2 w-2 rounded-full bg-primary" />
-                          )}
+                          <p className="text-xs text-muted-foreground">
+                            {getRelativeTime(notification.timestamp)}
+                          </p>
                         </div>
-                        <p className="text-xs text-muted-foreground">
-                          {notification.message}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {notification.time}
-                        </p>
                       </div>
                     </div>
-                  </div>
-                ))
-              )}
-            </div>
-          </PopoverContent>
-        </Popover>
+                  ))
+                )}
+              </div>
+            </PopoverContent>
+          </Popover>
+        )}
 
         {/* Botones de autenticación o Menú de usuario */}
         <div className="flex items-center gap-2 sm:gap-3 shrink-0">

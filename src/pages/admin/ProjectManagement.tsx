@@ -58,6 +58,7 @@ import {
 import { AdminSidebar } from '@/components/admin/AdminSidebar';
 import { ActivityManager } from '@/components/admin/ActivityManager';
 import { allProjects, Project, Activity } from '@/data/projects';
+import { notifyNewProject, notifyProjectUpdate } from '@/lib/notificationHelpers';
 
 const ProjectManagement = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -170,6 +171,9 @@ const ProjectManagement = () => {
     setShowAddDialog(false);
     resetForm();
 
+    // Enviar notificación a todos los usuarios
+    notifyNewProject(newProject.title, newProject.id.toString());
+
     toast({
       title: 'Proyecto creado',
       description: `El proyecto "${newProject.title}" ha sido agregado exitosamente.`,
@@ -211,6 +215,13 @@ const ProjectManagement = () => {
     setShowEditDialog(false);
     setSelectedProject(null);
     resetForm();
+
+    // Enviar notificación de actualización a usuarios inscritos
+    notifyProjectUpdate(
+      selectedProject.id.toString(),
+      formData.title,
+      'El proyecto ha sido actualizado con nueva información.'
+    );
 
     toast({
       title: 'Proyecto actualizado',

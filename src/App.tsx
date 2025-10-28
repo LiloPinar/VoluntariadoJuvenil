@@ -25,6 +25,7 @@ import ActivityValidation from "./pages/admin/ActivityValidation";
 import { LocaleProvider } from "./i18n/LocaleContext";
 import { AuthProvider } from "./contexts/AuthContext";
 import { ProjectProvider } from "./contexts/ProjectContext";
+import { NotificationProvider } from "./contexts/NotificationContext";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import SelectionReader from "./components/SelectionReader";
 
@@ -44,13 +45,14 @@ const App = () => {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <SelectionReader />
         <Toaster />
         <Sonner />
         <AuthProvider>
-          <ProjectProvider>
-            <LocaleProvider>
-              <Routes>
+          <NotificationProvider>
+            <ProjectProvider>
+              <LocaleProvider>
+                <SelectionReader />
+                <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/proyectos" element={<Proyectos />} />
               <Route path="/proyecto/:id" element={<DetalleProyecto />} />
@@ -92,10 +94,11 @@ const App = () => {
               />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
-            </Routes>
-          </LocaleProvider>
-        </ProjectProvider>
-      </AuthProvider>
+                </Routes>
+              </LocaleProvider>
+            </ProjectProvider>
+          </NotificationProvider>
+        </AuthProvider>
       </TooltipProvider>
     </QueryClientProvider>
   );

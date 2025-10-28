@@ -300,9 +300,9 @@ const Profile = () => {
           {/* Encabezado */}
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold">Mi Perfil</h1>
+              <h1 className="text-3xl font-bold">{t('perfil_title')}</h1>
               <p className="text-muted-foreground mt-1">
-                Gestiona tu información personal
+                {t('perfil_desc')}
               </p>
             </div>
             
@@ -331,7 +331,7 @@ const Profile = () => {
                   className="gap-2 bg-gradient-to-r from-primary to-secondary"
                 >
                   <Save className="h-4 w-4" />
-                  {isLoading ? 'Guardando...' : 'Guardar'}
+                  {isLoading ? 'Guardando...' : t('actualizar_perfil')}
                 </Button>
               </div>
             )}
@@ -403,7 +403,7 @@ const Profile = () => {
           {/* Información del Perfil */}
           <Card className="border-2 shadow-xl">
             <CardHeader>
-              <CardTitle className="text-xl">Información Personal</CardTitle>
+              <CardTitle className="text-xl">{t('informacion_personal')}</CardTitle>
               <CardDescription>
                 {isEditing 
                   ? 'Actualiza tu información personal y de contacto' 
@@ -474,7 +474,7 @@ const Profile = () => {
               <div className="space-y-2">
                 <Label htmlFor="email" className="text-sm font-medium flex items-center gap-2">
                   <Mail className="h-4 w-4" />
-                  Correo Electrónico
+                  {t('correo_electronico')}
                 </Label>
                 {isEditing ? (
                   <>
@@ -503,7 +503,7 @@ const Profile = () => {
               <div className="space-y-2">
                 <Label htmlFor="phone" className="text-sm font-medium flex items-center gap-2">
                   <Phone className="h-4 w-4" />
-                  Teléfono
+                  {t('telefono')}
                 </Label>
                 {isEditing ? (
                   <>
@@ -535,7 +535,7 @@ const Profile = () => {
               <div className="space-y-2">
                 <Label htmlFor="location" className="text-sm font-medium flex items-center gap-2">
                   <MapPin className="h-4 w-4" />
-                  Ubicación
+                  {t('ubicacion_field')}
                 </Label>
                 {isEditing ? (
                   <Input
@@ -557,7 +557,7 @@ const Profile = () => {
               <div className="space-y-2">
                 <Label htmlFor="birthDate" className="text-sm font-medium flex items-center gap-2">
                   <Calendar className="h-4 w-4" />
-                  Fecha de Nacimiento
+                  {t('fecha_nacimiento')}
                 </Label>
                 {isEditing ? (
                   <div className="space-y-1">
@@ -611,7 +611,7 @@ const Profile = () => {
                 <div className="space-y-2">
                   <Label className="text-sm font-medium flex items-center gap-2 text-muted-foreground">
                     <CheckCircle2 className="h-4 w-4" />
-                    Miembro desde
+                    {t('miembro_desde')}
                   </Label>
                   <p className="text-base p-2 bg-muted/30 rounded border">
                     {new Date(profile.joinDate).toLocaleDateString('es-EC', { 
@@ -633,7 +633,7 @@ const Profile = () => {
                 <div className="text-3xl font-bold text-primary">
                   {user?.completedProjects ?? 0}
                 </div>
-                <p className="text-sm text-muted-foreground mt-1">Proyectos Completados</p>
+                <p className="text-sm text-muted-foreground mt-1">{t('proyectos_completados_count')}</p>
               </CardContent>
             </Card>
             <Card>
@@ -641,7 +641,7 @@ const Profile = () => {
                 <div className="text-3xl font-bold text-secondary">
                   {user?.volunteerHours ?? 0}
                 </div>
-                <p className="text-sm text-muted-foreground mt-1">Horas de Voluntariado</p>
+                <p className="text-sm text-muted-foreground mt-1">{t('horas_voluntariado')}</p>
               </CardContent>
             </Card>
             <Card>
@@ -649,7 +649,7 @@ const Profile = () => {
                 <div className="text-3xl font-bold text-accent">
                   {user?.recognitions ?? 0}
                 </div>
-                <p className="text-sm text-muted-foreground mt-1">Reconocimientos</p>
+                <p className="text-sm text-muted-foreground mt-1">{t('reconocimientos')}</p>
               </CardContent>
             </Card>
           </div>
