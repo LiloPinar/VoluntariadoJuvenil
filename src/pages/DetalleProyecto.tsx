@@ -187,6 +187,24 @@ const DetalleProyecto = () => {
                 reviewedDate={enrollment.reviewedDate}
                 rejectionReason={enrollment.rejectionReason}
               />
+              
+              {/* Barra de progreso del proyecto */}
+              <div className="mt-6 pt-6 border-t border-border">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-sm font-semibold text-foreground">Progreso del Proyecto</h3>
+                  <span className="text-sm font-medium text-muted-foreground">45%</span>
+                </div>
+                <div className="relative w-full h-3 bg-muted rounded-full overflow-hidden">
+                  <div 
+                    className="absolute top-0 left-0 h-full bg-gradient-to-r from-primary to-primary/80 rounded-full transition-all duration-500 ease-out"
+                    style={{ width: '45%' }}
+                  />
+                </div>
+                <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
+                  <Clock className="h-3 w-3" />
+                  <span>Estimado: 3 semanas restantes</span>
+                </div>
+              </div>
             </Card>
           )}
 

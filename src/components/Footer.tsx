@@ -1,5 +1,6 @@
 import { Mail, Phone, MapPin } from "lucide-react";
 import { useLocale } from '@/i18n/LocaleContext';
+import { Link } from "react-router-dom";
 import logoImage from "@/assets/VoluntariadoJuvenilLogo.jpg";
 
 export const Footer = () => {
@@ -53,26 +54,30 @@ export const Footer = () => {
             <h3 className="mb-3 sm:mb-4 text-xl sm:text-2xl font-bold">
               Políticas y Términos
             </h3>
-            <ul className="space-y-2 text-xs sm:text-sm text-muted-foreground">
+            <ul className="space-y-2 text-xs sm:text-sm">
               <li>
-                <span className="cursor-not-allowed opacity-60">
+                <Link 
+                  to="/privacy" 
+                  className="text-muted-foreground hover:text-primary transition-colors hover:underline"
+                >
                   Política de Privacidad
-                </span>
+                </Link>
               </li>
               <li>
-                <span className="cursor-not-allowed opacity-60">
+                <Link 
+                  to="/terms" 
+                  className="text-muted-foreground hover:text-primary transition-colors hover:underline"
+                >
                   Términos de Uso
-                </span>
+                </Link>
               </li>
               <li>
-                <span className="cursor-not-allowed opacity-60">
+                <Link 
+                  to="/code-of-conduct" 
+                  className="text-muted-foreground hover:text-primary transition-colors hover:underline"
+                >
                   Código de Conducta
-                </span>
-              </li>
-              <li>
-                <span className="cursor-not-allowed opacity-60">
-                  Preguntas Frecuentes
-                </span>
+                </Link>
               </li>
             </ul>
           </div>
