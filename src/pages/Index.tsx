@@ -6,15 +6,17 @@ import { ProjectCard } from "@/components/ProjectCard";
 import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { ArrowRight, TrendingUp, Users, Award } from "lucide-react";
+import { ArrowRight, TrendingUp, Users, Award, Lightbulb } from "lucide-react";
 import heroImage from "@/assets/hero-volunteering.jpg";
 import { useLocale } from "@/i18n/LocaleContext";
+import { useAuthContext } from "@/contexts/AuthContext";
 import { allProjects, getProjectTitle, getProjectDescription } from "@/data/projects";
 
 const Index = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const navigate = useNavigate();
   const { t, locale } = useLocale();
+  const { isAuthenticated } = useAuthContext();
 
   // Scroll al top cuando se carga la página
   useEffect(() => {
@@ -170,6 +172,33 @@ const Index = () => {
               <h3 className="mb-3 sm:mb-4 text-xl sm:text-2xl font-bold">{t('necesitas_ayuda')}</h3>
               <p className="mb-4 sm:mb-6 text-sm sm:text-base text-muted-foreground">{t('home_sub')}</p>
               <Button variant="outline" className="w-full sm:w-auto">{t('contactar_soporte')}</Button>
+            </div>
+          </section>
+
+          {/* Proponer Proyecto Section */}
+          <section className="border-t border-border bg-primary/5 py-8 sm:py-12">
+            <div className="container px-4 sm:px-6 lg:px-8 text-center">
+              <h3 className="mb-3 sm:mb-4 text-xl sm:text-2xl font-bold">Proponer Proyecto</h3>
+              <p className="mb-4 sm:mb-6 text-sm sm:text-base text-muted-foreground">
+                ¿Tienes una idea para un proyecto de voluntariado? Compártela con nosotros y ayuda a crear impacto en la comunidad.
+              </p>
+              {isAuthenticated ? (
+                <Button 
+                  className="w-full sm:w-auto gap-2"
+                  onClick={() => navigate('/proponer-proyecto')}
+                >
+                  <Lightbulb className="h-4 w-4" />
+                  Proponer Proyecto
+                </Button>
+              ) : (
+                <Button 
+                  variant="outline" 
+                  className="w-full sm:w-auto"
+                  onClick={() => navigate('/login')}
+                >
+                  Inicia sesión para proponer
+                </Button>
+              )}
             </div>
           </section>
         </main>

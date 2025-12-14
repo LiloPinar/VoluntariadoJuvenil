@@ -21,6 +21,7 @@ import PrivacyPolicy from "./pages/PrivacyPolicy";
 import CodeOfConduct from "./pages/CodeOfConduct";
 import NotFound from "./pages/NotFound";
 import ResetPassword from "./pages/ResetPassword";
+import PropuestaProyecto from "./pages/PropuestaProyecto";
 import AdminDashboard from "./pages/admin/Dashboard";
 import ProjectManagement from "./pages/admin/ProjectManagement";
 import ActivityValidation from "./pages/admin/ActivityValidation";
@@ -71,6 +72,7 @@ const App = () => {
               <Route path="/terms" element={<TermsOfService />} />
               <Route path="/privacy" element={<PrivacyPolicy />} />
               <Route path="/code-of-conduct" element={<CodeOfConduct />} />
+              <Route path="/proponer-proyecto" element={<PropuestaProyecto />} />
               {/* Rutas de administrador */}
               <Route 
                 path="/admin/dashboard" 

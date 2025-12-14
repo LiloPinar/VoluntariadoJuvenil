@@ -14,8 +14,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Search, SlidersHorizontal, Grid3x3, List, MapPin, Clock } from "lucide-react";
+import { Search, SlidersHorizontal, Grid3x3, List, MapPin, Clock, Lightbulb } from "lucide-react";
 import { allProjects, getProjectTitle, getProjectDescription } from "@/data/projects";
+import { useAuthContext } from "@/contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
 
 type Category = "all" | "social" | "environmental" | "educational";
 type SortBy = "recent" | "popular" | "hours-asc" | "hours-desc";
@@ -31,6 +33,8 @@ const Proyectos = () => {
   const [showFilters, setShowFilters] = useState(false);
 
   const { t, locale } = useLocale();
+  const { isAuthenticated } = useAuthContext();
+  const navigate = useNavigate();
 
   // Cargar proyectos desde localStorage o usar los predeterminados
   const projects = useMemo(() => {
@@ -107,10 +111,23 @@ const Proyectos = () => {
         <main className="flex-1 container px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
           {/* Header Section */}
           <div className="mb-6 sm:mb-8">
-            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-2">{t('proyectos_page_title')}</h1>
-            <p className="text-sm sm:text-base text-muted-foreground">
-              {t('proyectos_page_desc')}
-            </p>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div>
+                <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-2">{t('proyectos_page_title')}</h1>
+                <p className="text-sm sm:text-base text-muted-foreground">
+                  {t('proyectos_page_desc')}
+                </p>
+              </div>
+              {isAuthenticated && (
+                <Button
+                  onClick={() => navigate('/proponer-proyecto')}
+                  className="gap-2"
+                >
+                  <Lightbulb className="h-4 w-4" />
+                  Proponer Proyecto
+                </Button>
+              )}
+            </div>
           </div>
 
           {/* Search and Filters Bar */}

@@ -54,7 +54,7 @@ const AdminDashboard = () => {
   };
 
   const handleReject = (projectId: number, userId: string, reason: string) => {
-    rejectEnrollment(projectId, userId, reason, user.email);
+    rejectEnrollment(projectId, userId, user.email, reason);
   };
 
   return (
