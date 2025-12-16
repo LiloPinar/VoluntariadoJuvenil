@@ -17,9 +17,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Calendar, Clock, MapPin, Search, BookmarkCheck, Filter } from "lucide-react";
+import { Calendar, Clock, MapPin, Search, BookmarkCheck, Filter, AlertTriangle } from "lucide-react";
 import { allProjects, getProjectTitle, getProjectDescription } from "@/data/projects";
 import { useProjectContext, EnrollmentStatus } from "@/contexts/ProjectContext";
+import { IncidentReportDialog } from "@/components/IncidentReportDialog";
 
 type SortBy = "recent" | "hours-asc" | "hours-desc" | "date-asc" | "date-desc";
 type StatusFilter = "all" | EnrollmentStatus;
@@ -28,6 +29,9 @@ const MisProyectos = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [sortBy, setSortBy] = useState<SortBy>("recent");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
+  const [showIncidentDialog, setShowIncidentDialog] = useState(false);
+  const [selectedProjectForIncident, setSelectedProjectForIncident] = useState<number | null>(null);
+  
   const { t, locale } = useLocale();
   const { isAuthenticated, user } = useAuthContext();
   const { getUserEnrolledProjects, enrolledProjects } = useProjectContext();
@@ -314,20 +318,39 @@ const MisProyectos = () => {
                     </Card>
                     
                     {/* Tarjeta del proyecto */}
-                    <ProjectCard 
-                      id={project.id}
-                      title={getProjectTitle(project, locale)}
-                      description={getProjectDescription(project, locale)}
-                      category={project.category}
-                      hours={project.hours}
-                      participants={project.participants}
-                      location={project.location}
-                      image={project.image}
-                      date={project.date}
-                      status={project.status}
-                      isOpenForEnrollment={project.isOpenForEnrollment}
-                      enrolled={!!enrollment}
-                    />
+                    <div className="relative">
+                      <ProjectCard 
+                        id={project.id}
+                        title={getProjectTitle(project, locale)}
+                        description={getProjectDescription(project, locale)}
+                        category={project.category}
+                        hours={project.hours}
+                        participants={project.participants}
+                        location={project.location}
+                        image={project.image}
+                        date={project.date}
+                        status={project.status}
+                        isOpenForEnrollment={project.isOpenForEnrollment}
+                        enrolled={!!enrollment}
+                      />
+                      
+                      {/* Botón de reportar incidencia - solo si está aprobado */}
+                      {enrollment?.status === 'approved' && (
+                        <div className="mt-3">
+                          <Button
+                            variant="outline"
+                            className="w-full gap-2 border-orange-200 dark:border-orange-800 text-orange-700 dark:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-950/20"
+                            onClick={() => {
+                              setSelectedProjectForIncident(project.id);
+                              setShowIncidentDialog(true);
+                            }}
+                          >
+                            <AlertTriangle className="h-4 w-4" />
+                            Reportar Incidencia
+                          </Button>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 );
               })}
@@ -347,6 +370,17 @@ const MisProyectos = () => {
                     }`
                 }
               </h3>
+      
+      {/* Dialog de reporte de incidencias */}
+      {selectedProjectForIncident && (
+        <IncidentReportDialog
+          projectId={selectedProjectForIncident}
+          projectTitle={allProjects.find(p => p.id === selectedProjectForIncident)?.title || ''}
+          open={showIncidentDialog}
+          onOpenChange={setShowIncidentDialog}
+        />
+      )}
+      
               <p className="text-sm text-muted-foreground mb-4">
                 {statusFilter === 'all' 
                   ? 'Explora los proyectos disponibles y únete a uno'

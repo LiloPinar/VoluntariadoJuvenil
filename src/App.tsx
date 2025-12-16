@@ -25,6 +25,9 @@ import PropuestaProyecto from "./pages/PropuestaProyecto";
 import AdminDashboard from "./pages/admin/Dashboard";
 import ProjectManagement from "./pages/admin/ProjectManagement";
 import ActivityValidation from "./pages/admin/ActivityValidation";
+import ProposalManagement from "./pages/admin/ProposalManagement";
+import IncidentManagement from "./pages/admin/IncidentManagement";
+import WithdrawalManagement from "./pages/admin/WithdrawalManagement";
 import { LocaleProvider } from "./i18n/LocaleContext";
 import { AuthProvider } from "./contexts/AuthContext";
 import { ProjectProvider } from "./contexts/ProjectContext";
@@ -95,6 +98,30 @@ const App = () => {
                 element={
                   <ProtectedRoute requireRole="admin">
                     <ActivityValidation />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/admin/proposals" 
+                element={
+                  <ProtectedRoute requireRole="admin">
+                    <ProposalManagement />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/admin/incidents" 
+                element={
+                  <ProtectedRoute requireRole="admin">
+                    <IncidentManagement />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/admin/withdrawals" 
+                element={
+                  <ProtectedRoute requireRole="admin">
+                    <WithdrawalManagement />
                   </ProtectedRoute>
                 } 
               />

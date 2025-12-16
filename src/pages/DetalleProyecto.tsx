@@ -9,6 +9,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { EnrollmentDialog } from '@/components/EnrollmentDialog';
 import { EnrollmentStatusStepper } from '@/components/EnrollmentStatusStepper';
 import { ProjectActivities } from '@/components/ProjectActivities';
+import { WithdrawalDialog } from '@/components/WithdrawalDialog';
 import { useAuthContext } from '@/contexts/AuthContext';
 import { useProjectContext } from '@/contexts/ProjectContext';
 import { allProjects, getProjectTitle, getProjectDescription } from '@/data/projects';
@@ -22,6 +23,7 @@ import {
   CheckCircle2,
   AlertCircle,
   Info,
+  LogOut,
 } from 'lucide-react';
 import {
   AlertDialog,
@@ -51,7 +53,7 @@ const DetalleProyecto = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { isAuthenticated, user } = useAuthContext();
-  const { isEnrolled: checkEnrolled, getEnrollmentStatus, unenrollProject, enrolledProjects } = useProjectContext();
+  const { isEnrolled: checkEnrolled, getEnrollmentStatus, enrolledProjects } = useProjectContext();
   const { toast } = useToast();
   const { t, locale } = useLocale();
   
@@ -59,6 +61,7 @@ const DetalleProyecto = () => {
   const [showEnrollmentDialog, setShowEnrollmentDialog] = useState(false);
   const [showAuthDialog, setShowAuthDialog] = useState(false);
   const [showProfileIncompleteDialog, setShowProfileIncompleteDialog] = useState(false);
+  const [showWithdrawalDialog, setShowWithdrawalDialog] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   // Cargar proyectos desde localStorage o usar los predeterminados
@@ -93,9 +96,8 @@ const DetalleProyecto = () => {
       return;
     }
 
-    // Si está inscrito, cancelar inscripción (sin validar perfil ni inscripciones abiertas)
+    // Si ya está inscrito, no hacer nada (debe usar solicitud de baja)
     if (isEnrolled) {
-      handleUnenroll();
       return;
     }
 
@@ -117,26 +119,6 @@ const DetalleProyecto = () => {
 
     // Mostrar diálogo de inscripción
     setShowEnrollmentDialog(true);
-  };
-
-  const handleUnenroll = async () => {
-    setIsLoading(true);
-    try {
-      await new Promise(resolve => setTimeout(resolve, 500));
-      unenrollProject(projectId, user?.email!);
-      toast({
-        title: 'Inscripción cancelada',
-        description: 'Te has desinscrito del proyecto exitosamente.',
-      });
-    } catch (error) {
-      toast({
-        title: 'Error',
-        description: 'No se pudo cancelar la inscripción.',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsLoading(false);
-    }
   };
 
   if (!project) {
@@ -425,10 +407,11 @@ const DetalleProyecto = () => {
                         isLoading || 
                         project.status === 'completed' || 
                         enrollmentStatus === 'pending' ||
+                        isEnrolled ||
                         (!isEnrolled && !isAuthenticated && !(project.isOpenForEnrollment ?? true)) ||
                         (!isEnrolled && isAuthenticated && !(project.isOpenForEnrollment ?? true))
                       }
-                      variant={isEnrolled && isAuthenticated ? 'outline' : 'default'}
+                      variant={enrollmentStatus === 'approved' ? 'secondary' : 'default'}
                     >
                       {isLoading
                         ? t('procesando')
@@ -436,12 +419,24 @@ const DetalleProyecto = () => {
                         ? t('solicitud_pendiente')
                         : enrollmentStatus === 'rejected'
                         ? t('rechazado')
+                        : enrollmentStatus === 'approved'
+                        ? '✓ Inscrito en el Proyecto'
                         : !(project.isOpenForEnrollment ?? true) && !isEnrolled
                         ? t('inscripciones_cerradas')
-                        : isEnrolled && isAuthenticated
-                        ? t('cancelar_inscripcion')
                         : t('inscribirse_ahora')}
                     </Button>
+                    
+                    {/* Botón de Solicitar Baja - Solo para voluntarios inscritos y aprobados */}
+                    {isEnrolled && enrollmentStatus === 'approved' && (
+                      <Button
+                        className="w-full text-sm sm:text-base h-10 sm:h-11 mt-2"
+                        onClick={() => setShowWithdrawalDialog(true)}
+                        variant="destructive"
+                      >
+                        <LogOut className="h-4 w-4 mr-2" />
+                        Solicitar Baja del Proyecto
+                      </Button>
+                    )}
                     
                     {/* Mensaje cuando las inscripciones están cerradas */}
                     {!(project.isOpenForEnrollment ?? true) && !isEnrolled && (
@@ -468,6 +463,14 @@ const DetalleProyecto = () => {
           userId={user.email}
         />
       )}
+
+      {/* Diálogo de Solicitud de Baja */}
+      <WithdrawalDialog
+        projectId={projectId}
+        projectTitle={getProjectTitle(project, locale)}
+        open={showWithdrawalDialog}
+        onOpenChange={setShowWithdrawalDialog}
+      />
 
       <AlertDialog open={showProfileIncompleteDialog} onOpenChange={setShowProfileIncompleteDialog}>
         <AlertDialogContent className="max-w-[90vw] sm:max-w-md">

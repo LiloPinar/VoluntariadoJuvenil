@@ -3,10 +3,12 @@ import {
   Users, 
   ClipboardList, 
   Settings,
-  LogOut,
+  LogOut as LogOutIcon,
   X,
   FolderKanban,
-  CheckCircle2
+  CheckCircle2,
+  Lightbulb,
+  AlertTriangle
 } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -39,6 +41,21 @@ export const AdminSidebar = ({ isOpen, onClose }: AdminSidebarProps) => {
       name: 'Gestión de Proyectos',
       icon: FolderKanban,
       path: '/admin/projects',
+    },
+    {
+      name: 'Propuestas de Proyectos',
+      icon: Lightbulb,
+      path: '/admin/proposals',
+    },
+    {
+      name: 'Gestión de Incidencias',
+      icon: AlertTriangle,
+      path: '/admin/incidents',
+    },
+    {
+      name: 'Solicitudes de Baja',
+      icon: LogOutIcon,
+      path: '/admin/withdrawals',
     },
     {
       name: 'Validar Actividades',
@@ -131,7 +148,7 @@ export const AdminSidebar = ({ isOpen, onClose }: AdminSidebarProps) => {
               className="w-full justify-start"
               onClick={handleLogout}
             >
-              <LogOut className="h-4 w-4 mr-2" />
+              <LogOutIcon className="h-4 w-4 mr-2" />
               Cerrar Sesión
             </Button>
           </div>
