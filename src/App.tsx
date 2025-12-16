@@ -28,6 +28,9 @@ import ActivityValidation from "./pages/admin/ActivityValidation";
 import ProposalManagement from "./pages/admin/ProposalManagement";
 import IncidentManagement from "./pages/admin/IncidentManagement";
 import WithdrawalManagement from "./pages/admin/WithdrawalManagement";
+import ManualHoursManagement from "./pages/admin/ManualHoursManagement";
+import CertificateManagement from "./pages/admin/CertificateManagement";
+import Certificados from "./pages/Certificados";
 import { LocaleProvider } from "./i18n/LocaleContext";
 import { AuthProvider } from "./contexts/AuthContext";
 import { ProjectProvider } from "./contexts/ProjectContext";
@@ -64,6 +67,7 @@ const App = () => {
               <Route path="/proyecto/:id" element={<DetalleProyecto />} />
               <Route path="/mis-proyectos" element={<MisProyectos />} />
               <Route path="/mis-horas" element={<MisHoras />} />
+              <Route path="/certificados" element={<Certificados />} />
               <Route path="/comunidad" element={<Comunidad />} />
               <Route path="/configuracion" element={<Configuracion />} />
               <Route path="/ayuda" element={<Ayuda />} />
@@ -122,6 +126,22 @@ const App = () => {
                 element={
                   <ProtectedRoute requireRole="admin">
                     <WithdrawalManagement />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/admin/manual-hours" 
+                element={
+                  <ProtectedRoute requireRole="admin">
+                    <ManualHoursManagement />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/admin/certificates" 
+                element={
+                  <ProtectedRoute requireRole="admin">
+                    <CertificateManagement />
                   </ProtectedRoute>
                 } 
               />

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Home,
   Calendar,
@@ -13,6 +14,7 @@ import {
   Type,
   Bell,
   BookmarkCheck,
+  FileCheck,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -34,6 +36,7 @@ const menuItems = [
   { icon: Calendar, label: "proyectos", shortcut: "Alt+P" },
   { icon: BookmarkCheck, label: "mis_proyectos", shortcut: "Alt+Y" },
   { icon: Award, label: "mis_horas", shortcut: "Alt+M" },
+  { icon: FileCheck, label: "certificados", shortcut: "Alt+E" },
   { icon: Users, label: "comunidad", shortcut: "Alt+C" },
   { icon: Settings, label: "configuracion", shortcut: "Alt+S" },
   { icon: HelpCircle, label: "ayuda", shortcut: "Alt+A" },
@@ -48,18 +51,42 @@ const accessibilityItems = [
 
 export const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
   const [isAccessibilityOpen, setIsAccessibilityOpen] = useState(false);
-
+  const navigate = useNavigate();
   const { t } = useLocale();
   const { isAuthenticated } = useAuthContext();
 
+  // Mapeo de etiquetas a rutas
+  const routeMap: Record<string, string> = {
+    inicio: "/",
+    proyectos: "/proyectos",
+    mis_proyectos: "/mis-proyectos",
+    mis_horas: "/mis-horas",
+    certificados: "/certificados",
+    comunidad: "/comunidad",
+    configuracion: "/configuracion",
+    ayuda: "/ayuda",
+  };
+
   // Filtrar menuItems según autenticación
   const visibleMenuItems = menuItems.filter(item => {
-    // Si no está autenticado, ocultar "mis_proyectos" y "mis_horas"
-    if (!isAuthenticated && (item.label === "mis_proyectos" || item.label === "mis_horas")) {
+    // Si no está autenticado, ocultar items que requieren auth
+    if (!isAuthenticated && (
+      item.label === "mis_proyectos" || 
+      item.label === "mis_horas" ||
+      item.label === "certificados"
+    )) {
       return false;
     }
     return true;
   });
+
+  const handleNavigation = (label: string) => {
+    const route = routeMap[label];
+    if (route) {
+      navigate(route);
+      onClose();
+    }
+  };
 
   return (
     <>
@@ -85,6 +112,7 @@ export const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
               key={item.label}
               variant="ghost"
               className="w-full justify-start gap-3 text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+              onClick={() => handleNavigation(item.label)}
             >
               <item.icon className="h-5 w-5" />
               <span className="flex-1 text-left">{t(item.label)}</span>

@@ -16,6 +16,7 @@ import {
   KeyRound,
   BookmarkCheck,
   Bell,
+  FileCheck,
 } from "lucide-react";
 import { useState } from "react";
 import ShortcutHelp from "@/components/ShortcutHelp";
@@ -60,6 +61,7 @@ const navItems = [
   { icon: Calendar, label: "Proyectos" },
   { icon: BookmarkCheck, label: "Mis Proyectos" },
   { icon: Award, label: "Mis Horas" },
+  { icon: FileCheck, label: "Certificados" },
   { icon: Users, label: "Comunidad" },
 ];
 
@@ -72,8 +74,12 @@ export const Header = ({ currentPage, onMenuClick }: HeaderProps) => {
 
   // Filtrar navItems según autenticación
   const visibleNavItems = navItems.filter(item => {
-    // Si no está autenticado, ocultar "Mis Proyectos" y "Mis Horas"
-    if (!isAuthenticated && (item.label === "Mis Proyectos" || item.label === "Mis Horas")) {
+    // Si no está autenticado, ocultar items que requieren autenticación
+    if (!isAuthenticated && (
+      item.label === "Mis Proyectos" || 
+      item.label === "Mis Horas" ||
+      item.label === "Certificados"
+    )) {
       return false;
     }
     return true;
@@ -149,6 +155,8 @@ export const Header = ({ currentPage, onMenuClick }: HeaderProps) => {
                   ? "/mis-proyectos"
                   : item.label === "Mis Horas"
                   ? "/mis-horas"
+                  : item.label === "Certificados"
+                  ? "/certificados"
                   : "/comunidad"
               }
               className={({ isActive }) =>
@@ -166,7 +174,9 @@ export const Header = ({ currentPage, onMenuClick }: HeaderProps) => {
                   : item.label === 'Mis Proyectos'
                   ? t('mis_proyectos')
                   : item.label === 'Mis Horas' 
-                  ? t('mis_horas') 
+                  ? t('mis_horas')
+                  : item.label === 'Certificados'
+                  ? t('certificados') 
                   : t('comunidad')}
               </span>
             </NavLink>

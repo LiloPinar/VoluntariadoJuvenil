@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
+import { ManualHoursDialog } from "@/components/ManualHoursDialog";
 import { 
   Clock, 
   CheckCircle2, 
@@ -17,15 +18,20 @@ import {
   TrendingUp, 
   Calendar,
   ListTodo,
-  BarChart3
+  BarChart3,
+  Plus,
+  FileText,
+  AlertCircle,
+  XCircle
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 const MisHoras = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [showManualHoursDialog, setShowManualHoursDialog] = useState(false);
   const { t } = useLocale();
   const { user } = useAuthContext();
-  const { enrolledProjects } = useProjectContext();
+  const { enrolledProjects, getUserManualHours } = useProjectContext();
   const navigate = useNavigate();
 
   // Cargar proyectos desde localStorage
@@ -38,6 +44,11 @@ const MisHoras = () => {
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
+
+  // Obtener registros de horas manuales del usuario
+  const userManualHours = user?.email ? getUserManualHours(user.email) : [];
+  const approvedManualHours = userManualHours.filter(record => record.status === 'approved');
+  const pendingManualHours = userManualHours.filter(record => record.status === 'pending');
 
   // Calcular estadísticas de horas
   const calculateStats = () => {
@@ -82,11 +93,16 @@ const MisHoras = () => {
       }
     });
 
+    // Sumar horas manuales aprobadas
+    const manualHoursTotal = approvedManualHours.reduce((sum, record) => sum + record.hours, 0);
+    totalHours += manualHoursTotal;
+
     return {
       totalHours,
       completedActivities,
       totalActivities,
       projectsWithHours,
+      manualHoursTotal,
     };
   };
 
@@ -112,12 +128,21 @@ const MisHoras = () => {
         <main className="flex-1 container px-4 py-8">
           <div className="space-y-6">
             {/* Encabezado */}
-            <div>
-              <h1 className="text-3xl font-bold flex items-center gap-2">
-                <Clock className="h-8 w-8 text-primary" />
-                {t('mis_horas_title')}
-              </h1>
-              <p className="mt-2 text-muted-foreground">{t('mis_horas_desc')}</p>
+            <div className="flex items-start justify-between">
+              <div>
+                <h1 className="text-3xl font-bold flex items-center gap-2">
+                  <Clock className="h-8 w-8 text-primary" />
+                  {t('mis_horas_title')}
+                </h1>
+                <p className="mt-2 text-muted-foreground">{t('mis_horas_desc')}</p>
+              </div>
+              <Button 
+                onClick={() => setShowManualHoursDialog(true)}
+                className="gap-2"
+              >
+                <Plus className="h-4 w-4" />
+                Registrar Horas Manualmente
+              </Button>
             </div>
 
             {/* Estadísticas Generales */}
@@ -182,6 +207,113 @@ const MisHoras = () => {
                 </CardContent>
               </Card>
             </div>
+
+            {/* Registros Manuales Pendientes */}
+            {pendingManualHours.length > 0 && (
+              <Card className="border-yellow-200 dark:border-yellow-800 bg-yellow-50/50 dark:bg-yellow-950/20">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-yellow-800 dark:text-yellow-300">
+                    <AlertCircle className="h-5 w-5" />
+                    Registros Pendientes de Aprobación
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    {pendingManualHours.map((record) => {
+                      const project = projects.find(p => p.id === record.projectId);
+                      return (
+                        <div
+                          key={record.id}
+                          className="border rounded-lg p-4 bg-white dark:bg-gray-900"
+                        >
+                          <div className="flex items-start justify-between gap-4">
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2 mb-2">
+                                <h3 className="font-semibold">{project?.title || 'Proyecto desconocido'}</h3>
+                                <Badge variant="outline" className="bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300">
+                                  Pendiente
+                                </Badge>
+                              </div>
+                              <div className="text-sm text-muted-foreground space-y-1">
+                                <p className="flex items-center gap-1">
+                                  <Calendar className="h-3 w-3" />
+                                  {new Date(record.date).toLocaleDateString('es-ES')}
+                                </p>
+                                <p className="flex items-center gap-1">
+                                  <Clock className="h-3 w-3" />
+                                  {record.hours} horas
+                                </p>
+                                <p className="mt-2">{record.description}</p>
+                              </div>
+                            </div>
+                            <div className="text-right">
+                              <div className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">
+                                {record.hours}h
+                              </div>
+                              <p className="text-xs text-muted-foreground">
+                                pendiente
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Registros Manuales Aprobados */}
+            {approvedManualHours.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <FileText className="h-5 w-5" />
+                    Horas Registradas Manualmente ({stats.manualHoursTotal}h)
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    {approvedManualHours.map((record) => {
+                      const project = projects.find(p => p.id === record.projectId);
+                      return (
+                        <div
+                          key={record.id}
+                          className="border rounded-lg p-4 hover:border-primary/50 transition-colors"
+                        >
+                          <div className="flex items-start justify-between gap-4">
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2 mb-2">
+                                <h3 className="font-semibold">{project?.title || 'Proyecto desconocido'}</h3>
+                                <Badge variant="outline" className="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300">
+                                  <CheckCircle2 className="h-3 w-3 mr-1" />
+                                  Aprobado
+                                </Badge>
+                              </div>
+                              <div className="text-sm text-muted-foreground space-y-1">
+                                <p className="flex items-center gap-1">
+                                  <Calendar className="h-3 w-3" />
+                                  {new Date(record.date).toLocaleDateString('es-ES')}
+                                </p>
+                                <p className="mt-2">{record.description}</p>
+                              </div>
+                            </div>
+                            <div className="text-right">
+                              <div className="text-2xl font-bold text-green-600 dark:text-green-400">
+                                {record.hours}h
+                              </div>
+                              <p className="text-xs text-muted-foreground">
+                                aprobado
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
 
             {/* Desglose por Proyecto */}
             <Card>
@@ -292,6 +424,12 @@ const MisHoras = () => {
         </main>
       </div>
       <Footer />
+      
+      {/* Dialog para registro manual de horas */}
+      <ManualHoursDialog
+        open={showManualHoursDialog}
+        onOpenChange={setShowManualHoursDialog}
+      />
     </div>
   );
 };

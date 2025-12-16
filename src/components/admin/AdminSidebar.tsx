@@ -8,7 +8,9 @@ import {
   FolderKanban,
   CheckCircle2,
   Lightbulb,
-  AlertTriangle
+  AlertTriangle,
+  Clock,
+  Award
 } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -48,6 +50,21 @@ export const AdminSidebar = ({ isOpen, onClose }: AdminSidebarProps) => {
       path: '/admin/proposals',
     },
     {
+      name: 'Validar Actividades',
+      icon: CheckCircle2,
+      path: '/admin/activities',
+    },
+    {
+      name: 'Horas Manuales',
+      icon: Clock,
+      path: '/admin/manual-hours',
+    },
+    {
+      name: 'Gestión de Certificados',
+      icon: Award,
+      path: '/admin/certificates',
+    },
+    {
       name: 'Gestión de Incidencias',
       icon: AlertTriangle,
       path: '/admin/incidents',
@@ -56,11 +73,6 @@ export const AdminSidebar = ({ isOpen, onClose }: AdminSidebarProps) => {
       name: 'Solicitudes de Baja',
       icon: LogOutIcon,
       path: '/admin/withdrawals',
-    },
-    {
-      name: 'Validar Actividades',
-      icon: CheckCircle2,
-      path: '/admin/activities',
     },
     {
       name: 'Ver como Voluntario',
