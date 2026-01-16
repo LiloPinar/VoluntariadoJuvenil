@@ -3,6 +3,7 @@ import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { useLocale } from '@/i18n/LocaleContext';
 import { useAuthContext } from '@/contexts/AuthContext';
+import { uploadFile, getPublicUrl } from '@/lib/supabase';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -39,6 +40,7 @@ const Profile = () => {
   // Referencia para el input de archivo
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
 
   // Datos del perfil desde el contexto
   const [profile, setProfile] = useState({
@@ -139,6 +141,7 @@ const Profile = () => {
   const handleCancel = () => {
     setTempProfile({ ...profile });
     setAvatarPreview(null);
+    setAvatarFile(null);
     setIsEditing(false);
     setErrors({});
     setTouched({});
@@ -169,11 +172,13 @@ const Profile = () => {
       return;
     }
 
+    // Guardar archivo para subir después
+    setAvatarFile(file);
+
     // Leer archivo y crear preview
     const reader = new FileReader();
     reader.onloadend = () => {
       setAvatarPreview(reader.result as string);
-      setTempProfile(prev => ({ ...prev, avatar: reader.result as string }));
     };
     reader.readAsDataURL(file);
   };
@@ -229,21 +234,44 @@ const Profile = () => {
     setIsLoading(true);
 
     try {
-      await new Promise(resolve => setTimeout(resolve, 500));
+      let avatarUrl = profile.avatar;
 
-      // Actualizar en AuthContext (esto actualiza localStorage también)
-      updateUser({
+      // Si hay un nuevo archivo de avatar, subirlo a Supabase Storage
+      if (avatarFile && user) {
+        const fileExt = avatarFile.name.split('.').pop();
+        const filePath = `${user.id}/avatar.${fileExt}`;
+        
+        const { path, error: uploadError } = await uploadFile('avatars', filePath, avatarFile);
+        
+        if (uploadError) {
+          console.error('Error uploading avatar:', uploadError);
+          toast({
+            title: "Error al subir imagen",
+            description: "No se pudo subir la foto de perfil. Intenta nuevamente.",
+            variant: "destructive",
+          });
+          setIsLoading(false);
+          return;
+        }
+
+        if (path) {
+          avatarUrl = getPublicUrl('avatars', path);
+        }
+      }
+
+      // Actualizar en AuthContext (esto actualiza Supabase también)
+      await updateUser({
         firstName: tempProfile.firstName,
         lastName: tempProfile.lastName,
-        email: tempProfile.email,
         phone: tempProfile.phone,
         location: tempProfile.location,
         birthDate: tempProfile.birthDate,
-        avatar: tempProfile.avatar,
+        avatar: avatarUrl,
       });
 
-      setProfile({ ...tempProfile });
+      setProfile({ ...tempProfile, avatar: avatarUrl });
       setAvatarPreview(null);
+      setAvatarFile(null);
       setIsEditing(false);
       setErrors({});
       setTouched({});

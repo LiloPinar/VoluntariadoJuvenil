@@ -155,66 +155,42 @@ export const useAuth = () => {
     return authState.rememberedEmail;
   };
 
-  // Login simulado (reemplazar con lógica real)
-  const login = async (email: string, password: string, rememberMe: boolean) => {
-    // Simulación de delay de red
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    // Buscar usuario en localStorage
-    const users = JSON.parse(localStorage.getItem('users') || '[]');
-    const foundUser = users.find((u: any) => u.email === email);
-    
-    // Verificar si el usuario existe
-    if (!foundUser) {
-      // Usuario NO existe - mensaje genérico SIN contador y SIN bloqueo
-      return {
-        success: false,
-        message: `No encontramos una cuenta con este correo electrónico. Por favor, verifica que esté escrito correctamente o regístrate si aún no tienes una cuenta.`,
-        isLocked: false,
-        userNotFound: true,
-      };
-    }
-    
-    // Usuario existe - ahora sí verificar si ESTE email específico está bloqueado
+  // Pre-verificación antes de intentar login (solo verifica bloqueo)
+  const checkBeforeLogin = (email: string): { canProceed: boolean; message?: string } => {
     if (isEmailLocked(email)) {
       return {
-        success: false,
+        canProceed: false,
         message: `Cuenta bloqueada por seguridad. Intenta nuevamente en ${getEmailLockoutTimeRemaining(email)} minutos.`,
+      };
+    }
+    return { canProceed: true };
+  };
+
+  // Manejar resultado de login (llamar DESPUÉS de intentar con Supabase)
+  const handleLoginResult = (email: string, success: boolean, rememberMe: boolean) => {
+    if (success) {
+      // Login exitoso - limpiar intentos fallidos y recordar email
+      clearFailedAttemptsForEmail(email);
+      rememberEmail(email, rememberMe);
+      return { success: true };
+    }
+
+    // Login fallido - registrar intento
+    const result = recordFailedAttemptForEmail(email);
+    
+    if (result.isLocked) {
+      return {
+        success: false,
+        message: `Demasiados intentos fallidos. Tu cuenta ha sido bloqueada por ${result.lockoutMinutes} minutos por seguridad.`,
         isLocked: true,
       };
     }
     
-    // Verificar si la contraseña es correcta
-    if (foundUser.password !== password) {
-      const result = recordFailedAttemptForEmail(email);
-      
-      if (result.isLocked) {
-        return {
-          success: false,
-          message: `Demasiados intentos fallidos. Tu cuenta ha sido bloqueada por ${result.lockoutMinutes} minutos por seguridad.`,
-          isLocked: true,
-        };
-      }
-      
-      // Usuario existe pero contraseña incorrecta - mensaje CON contador
-      return {
-        success: false,
-        message: `La contraseña que ingresaste es incorrecta. Por favor, verifica tu contraseña o utiliza "¿Olvidaste tu contraseña?" para recuperarla. Te ${result.remainingAttempts === 1 ? 'queda' : 'quedan'} ${result.remainingAttempts} ${result.remainingAttempts === 1 ? 'intento' : 'intentos'}.`,
-        isLocked: false,
-        remainingAttempts: result.remainingAttempts,
-        wrongPassword: true,
-      };
-    }
-    
-    // Login exitoso - limpiar intentos fallidos SOLO de este email
-    clearFailedAttemptsForEmail(email);
-    rememberEmail(email, rememberMe);
-    
     return {
-      success: true,
-      message: '¡Bienvenido de nuevo!',
+      success: false,
+      message: `Credenciales incorrectas. Te ${result.remainingAttempts === 1 ? 'queda' : 'quedan'} ${result.remainingAttempts} ${result.remainingAttempts === 1 ? 'intento' : 'intentos'}.`,
       isLocked: false,
-      user: foundUser,
+      remainingAttempts: result.remainingAttempts,
     };
   };
 
@@ -223,7 +199,8 @@ export const useAuth = () => {
     rememberedEmail: authState.rememberedEmail,
     
     // Métodos
-    login,
+    checkBeforeLogin,
+    handleLoginResult,
     rememberEmail,
     forgetEmail,
     getRememberedEmail,

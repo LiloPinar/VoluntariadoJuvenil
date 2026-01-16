@@ -20,8 +20,8 @@ const Login = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
-  const { login: authContextLogin } = useAuthContext();
-  const { rememberedEmail, login: authLogin } = useAuth();
+  const { user, login: authContextLogin } = useAuthContext();
+  const { rememberedEmail, checkBeforeLogin, handleLoginResult } = useAuth();
   const { formData, errors, touched, handleChange, handleBlur, validateAll } = useLoginForm(rememberedEmail);
 
   const [showPassword, setShowPassword] = useState(false);
@@ -31,6 +31,20 @@ const Login = () => {
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
+
+  // Redirigir si el usuario ya está autenticado
+  useEffect(() => {
+    if (user) {
+      const returnTo = (location.state as { returnTo?: string })?.returnTo;
+      if (returnTo) {
+        navigate(returnTo);
+      } else if (user.role === 'admin') {
+        navigate('/admin/dashboard');
+      } else {
+        navigate('/');
+      }
+    }
+  }, [user, navigate, location.state]);
 
   // Manejo del envío del formulario
   const handleSubmit = async (e: React.FormEvent) => {
@@ -45,37 +59,34 @@ const Login = () => {
       return;
     }
 
-    // Intentar iniciar sesión con el hook useAuth
+    // Verificar si el email está bloqueado ANTES de intentar
+    const preCheck = checkBeforeLogin(formData.email);
+    if (!preCheck.canProceed) {
+      toast({
+        title: "🔒 Cuenta bloqueada temporalmente",
+        description: preCheck.message,
+        variant: "destructive",
+        duration: 6000,
+      });
+      return;
+    }
+
     setIsLoading(true);
 
     try {
-      const result = await authLogin(formData.email, formData.password, formData.rememberMe);
-
-      if (result.success) {
-        // Login exitoso - Guardar en AuthContext
-        const loginSuccess = await authContextLogin(formData.email, formData.password);
-        
-        if (loginSuccess) {
-          // Obtener el usuario para verificar su rol
-          const users = JSON.parse(localStorage.getItem('users') || '[]');
-          const loggedUser = users.find((u: any) => u.email === formData.email);
-          
-          toast({
-            title: t('login_success'),
-            description: `${t('home_title')}`,
-            className: "bg-green-50 dark:bg-green-950 border-green-200 dark:border-green-800 dark:text-green-50",
-          });
-          
-          // Redirigir según el rol del usuario
-          const returnTo = (location.state as { returnTo?: string })?.returnTo;
-          if (returnTo) {
-            setTimeout(() => navigate(returnTo), 500);
-          } else if (loggedUser?.role === 'admin') {
-            setTimeout(() => navigate('/admin/dashboard'), 500);
-          } else {
-            setTimeout(() => navigate('/'), 500);
-          }
-        }
+      // Intentar login con Supabase via AuthContext
+      const loginSuccess = await authContextLogin(formData.email, formData.password);
+      
+      // Registrar resultado (maneja contadores de intentos y remember me)
+      const result = handleLoginResult(formData.email, loginSuccess, formData.rememberMe);
+      
+      if (loginSuccess) {
+        toast({
+          title: t('login_success'),
+          description: `${t('home_title')}`,
+          className: "bg-green-50 dark:bg-green-950 border-green-200 dark:border-green-800 dark:text-green-50",
+        });
+        // La redirección se maneja en el useEffect cuando user cambie
       } else {
         if (result.isLocked) {
           toast({
@@ -84,26 +95,9 @@ const Login = () => {
             variant: "destructive",
             duration: 6000,
           });
-        } else if (result.userNotFound) {
-          // Usuario no existe - mensaje sin contador
-          toast({
-            title: "📧 Correo no encontrado",
-            description: result.message,
-            variant: "destructive",
-            duration: 5000,
-          });
-        } else if (result.wrongPassword) {
-          // Contraseña incorrecta - mensaje con contador
-          toast({
-            title: "🔑 Contraseña incorrecta",
-            description: result.message,
-            variant: "destructive",
-            duration: 5000,
-          });
         } else {
-          // Caso genérico
           toast({
-            title: "❌ Error al iniciar sesión",
+            title: "🔑 Credenciales incorrectas",
             description: result.message,
             variant: "destructive",
             duration: 5000,
