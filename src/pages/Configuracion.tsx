@@ -3,6 +3,7 @@ import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { useLocale } from '@/i18n/LocaleContext';
 import { useAuthContext } from '@/contexts/AuthContext';
+import { supabase } from '@/lib/supabase';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -150,16 +151,13 @@ const Configuracion = () => {
     setIsChangingPassword(true);
     
     try {
-      // Obtener usuarios de localStorage
-      const users = JSON.parse(localStorage.getItem('users') || '[]');
-      const userIndex = users.findIndex((u: any) => u.id === user?.id);
-      
-      if (userIndex === -1) {
-        throw new Error('Usuario no encontrado');
-      }
-      
-      // Verificar contraseña actual
-      if (users[userIndex].password !== passwordForm.currentPassword) {
+      // Verificar contraseña actual intentando re-autenticar
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: user?.email || '',
+        password: passwordForm.currentPassword,
+      });
+
+      if (signInError) {
         setPasswordErrors({ currentPassword: 'La contraseña actual es incorrecta' });
         toast({
           title: "Contraseña incorrecta",
@@ -170,12 +168,14 @@ const Configuracion = () => {
         return;
       }
       
-      // Simular delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Actualizar contraseña en la lista de usuarios
-      users[userIndex].password = passwordForm.newPassword;
-      localStorage.setItem('users', JSON.stringify(users));
+      // Actualizar contraseña en Supabase Auth
+      const { error: updateError } = await supabase.auth.updateUser({
+        password: passwordForm.newPassword,
+      });
+
+      if (updateError) {
+        throw updateError;
+      }
       
       toast({
         title: "Contraseña actualizada",

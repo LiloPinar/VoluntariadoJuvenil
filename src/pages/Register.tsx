@@ -19,7 +19,7 @@ const Register = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
-  const { register: authRegister } = useAuthContext();
+  const { user, register: authRegister } = useAuthContext();
   const { formData, errors, touched, handleChange, handleBlur, validateAll } = useRegisterForm();
 
   const [showPassword, setShowPassword] = useState(false);
@@ -30,6 +30,20 @@ const Register = () => {
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
+
+  // Redirigir si el usuario ya está autenticado
+  useEffect(() => {
+    if (user) {
+      const returnTo = (location.state as { returnTo?: string })?.returnTo;
+      if (returnTo) {
+        navigate(returnTo);
+      } else if (user.role === 'admin') {
+        navigate('/admin/dashboard');
+      } else {
+        navigate('/');
+      }
+    }
+  }, [user, navigate, location.state]);
 
   // Manejo del envío del formulario
   const handleSubmit = async (e: React.FormEvent) => {

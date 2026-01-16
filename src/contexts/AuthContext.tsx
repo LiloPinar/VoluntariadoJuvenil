@@ -1,18 +1,19 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { supabase } from '@/lib/supabase';
+import type { User as SupabaseUser, Session } from '@supabase/supabase-js';
 
 interface User {
   id: string;
   firstName: string;
   lastName: string;
-  fullName: string; // Calculado: firstName + lastName
+  fullName: string;
   email: string;
-  role: 'volunteer' | 'admin'; // Rol del usuario
+  role: 'volunteer' | 'admin';
   avatar?: string;
   phone?: string;
   location?: string;
   birthDate?: string;
   joinDate?: string;
-  // Estadísticas del usuario
   completedProjects?: number;
   volunteerHours?: number;
   recognitions?: number;
@@ -20,223 +21,202 @@ interface User {
 
 interface AuthContextType {
   user: User | null;
+  session: Session | null;
   isAuthenticated: boolean;
-  isLoading: boolean; // Estado de carga para evitar redirecciones prematuras
+  isLoading: boolean;
   login: (email: string, password: string) => Promise<boolean>;
   register: (firstName: string, lastName: string, email: string, password: string) => Promise<boolean>;
-  logout: () => void;
-  updateUser: (updates: Partial<User>) => void;
+  logout: () => Promise<void>;
+  updateUser: (updates: Partial<User>) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Emails de administradores
-const ADMIN_EMAILS = [
-  'admin@voluntariajoven.com', 
-  'admin@gmail.com', 
-  'saul@admin.com',
-  // Agrega tu email aquí para tener acceso de administrador
-  // 'tuemail@example.com'
-];
+// Transforma el perfil de Supabase al formato de User de la app
+const transformProfile = (profile: any, email: string): User => {
+  return {
+    id: profile.id,
+    firstName: profile.first_name || '',
+    lastName: profile.last_name || '',
+    fullName: `${profile.first_name || ''} ${profile.last_name || ''}`.trim(),
+    email: email,
+    role: profile.role || 'volunteer',
+    avatar: profile.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(`${profile.first_name} ${profile.last_name}`)}&background=3b82f6&color=fff`,
+    phone: profile.phone || '',
+    location: profile.location || '',
+    birthDate: profile.birth_date || '',
+    joinDate: profile.created_at?.split('T')[0] || '',
+    completedProjects: 0,
+    volunteerHours: 0,
+    recognitions: 0,
+  };
+};
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true); // Estado de carga inicial
+  const [session, setSession] = useState<Session | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Función helper para determinar el rol
-  const getUserRole = (email: string): 'volunteer' | 'admin' => {
-    return ADMIN_EMAILS.includes(email.toLowerCase()) ? 'admin' : 'volunteer';
+  // Cargar perfil desde Supabase
+  const loadProfile = async (supabaseUser: SupabaseUser) => {
+    try {
+      const { data: profile, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', supabaseUser.id)
+        .single();
+
+      if (error) {
+        console.error('Error loading profile:', error);
+        return null;
+      }
+
+      return transformProfile(profile, supabaseUser.email || '');
+    } catch (error) {
+      console.error('Error in loadProfile:', error);
+      return null;
+    }
   };
 
-  // Cargar usuario desde localStorage al montar y crear admin por defecto si no existe
+  // Inicializar sesión y escuchar cambios
   useEffect(() => {
-    // Migración: Actualizar usuarios antiguos con fullName a firstName/lastName y rol
-    let users = JSON.parse(localStorage.getItem('users') || '[]');
-    let needsUpdate = false;
-
-    // Crear cuenta admin por defecto si no existe
-    const defaultAdminEmail = 'admin@gmail.com';
-    const defaultAdminPassword = 'admin123';
-    if (!users.some((u: any) => u.email === defaultAdminEmail)) {
-      const adminUser = {
-        id: Date.now().toString(),
-        firstName: 'Admin',
-        lastName: 'Principal',
-        fullName: 'Admin Principal',
-        email: defaultAdminEmail,
-        password: defaultAdminPassword,
-        role: 'admin',
-        avatar: `https://ui-avatars.com/api/?name=Admin+Principal&background=3b82f6&color=fff`,
-        phone: '',
-        location: '',
-        birthDate: '',
-        joinDate: new Date().toISOString().split('T')[0],
-        completedProjects: 0,
-        volunteerHours: 0,
-        recognitions: 0,
-      };
-      users.push(adminUser);
-      localStorage.setItem('users', JSON.stringify(users));
-    }
-
-    const migratedUsers = users.map((u: any) => {
-      let updated = { ...u };
-      if (!u.firstName || !u.lastName) {
-        needsUpdate = true;
-        const nameParts = (u.fullName || 'Usuario Anónimo').split(' ');
-        updated = {
-          ...updated,
-          firstName: nameParts[0] || 'Usuario',
-          lastName: nameParts.slice(1).join(' ') || 'Anónimo',
-          fullName: u.fullName || `${nameParts[0]} ${nameParts.slice(1).join(' ')}`,
-        };
+    // Obtener sesión actual
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      setSession(session);
+      if (session?.user) {
+        const profile = await loadProfile(session.user);
+        setUser(profile);
       }
-      // Asignar rol si no existe
-      if (!u.role) {
-        needsUpdate = true;
-        updated.role = getUserRole(u.email);
-      }
-      return updated;
+      setIsLoading(false);
     });
-    if (needsUpdate) {
-      localStorage.setItem('users', JSON.stringify(migratedUsers));
-    }
 
-    // Cargar usuario actual
-    const savedUser = localStorage.getItem('currentUser');
-    if (savedUser) {
-      const parsedUser = JSON.parse(savedUser);
-      // Migrar usuario actual si es necesario
-      let migratedCurrentUser = { ...parsedUser };
-      let needsMigration = false;
-      if (!parsedUser.firstName || !parsedUser.lastName) {
-        needsMigration = true;
-        const nameParts = (parsedUser.fullName || 'Usuario Anónimo').split(' ');
-        migratedCurrentUser = {
-          ...migratedCurrentUser,
-          firstName: nameParts[0] || 'Usuario',
-          lastName: nameParts.slice(1).join(' ') || 'Anónimo',
-          fullName: parsedUser.fullName || `${nameParts[0]} ${nameParts.slice(1).join(' ')}`,
-        };
+    // Escuchar cambios de autenticación
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      setSession(session);
+      
+      if (event === 'SIGNED_IN' && session?.user) {
+        const profile = await loadProfile(session.user);
+        setUser(profile);
+      } else if (event === 'SIGNED_OUT') {
+        setUser(null);
       }
-      // Asignar rol si no existe
-      if (!parsedUser.role) {
-        needsMigration = true;
-        migratedCurrentUser.role = getUserRole(parsedUser.email);
-      }
-      if (needsMigration) {
-        setUser(migratedCurrentUser);
-        localStorage.setItem('currentUser', JSON.stringify(migratedCurrentUser));
-      } else {
-        setUser(parsedUser);
-      }
-    }
-    
-    // Marcar como cargado después de verificar localStorage
-    setIsLoading(false);
+      
+      setIsLoading(false);
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
   const login = async (email: string, password: string): Promise<boolean> => {
-    // Simulación - En producción conectar con API
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    // Buscar usuario en localStorage (simulación de BD)
-    const users = JSON.parse(localStorage.getItem('users') || '[]');
-    const foundUser = users.find((u: any) => u.email === email && u.password === password);
-    
-    if (foundUser) {
-      const { password: _, ...userWithoutPassword } = foundUser;
-      // Asegurar que tenga rol
-      const userWithRole = {
-        ...userWithoutPassword,
-        role: userWithoutPassword.role || getUserRole(email)
-      };
-      setUser(userWithRole);
-      localStorage.setItem('currentUser', JSON.stringify(userWithRole));
-      return true;
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) {
+        console.error('Login error:', error.message);
+        return false;
+      }
+
+      if (data.user) {
+        const profile = await loadProfile(data.user);
+        setUser(profile);
+        return true;
+      }
+
+      return false;
+    } catch (error) {
+      console.error('Login exception:', error);
+      return false;
     }
-    
-    return false;
   };
 
   const register = async (firstName: string, lastName: string, email: string, password: string): Promise<boolean> => {
-    // Simulación - En producción conectar con API
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    // Verificar si el email ya existe
-    const users = JSON.parse(localStorage.getItem('users') || '[]');
-    const emailExists = users.some((u: any) => u.email === email);
-    
-    if (emailExists) {
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            first_name: firstName,
+            last_name: lastName,
+          },
+        },
+      });
+
+      if (error) {
+        console.error('Register error:', error.message);
+        return false;
+      }
+
+      // Si el usuario se creó exitosamente, el trigger de la BD creará el perfil
+      if (data.user) {
+        // Esperar un momento para que el trigger cree el perfil
+        await new Promise(resolve => setTimeout(resolve, 500));
+        const profile = await loadProfile(data.user);
+        setUser(profile);
+        return true;
+      }
+
+      return false;
+    } catch (error) {
+      console.error('Register exception:', error);
       return false;
     }
-    
-    const fullName = `${firstName} ${lastName}`;
-    const role = getUserRole(email);
-    
-    // Crear nuevo usuario
-    const newUser = {
-      id: Date.now().toString(),
-      firstName,
-      lastName,
-      fullName,
-      email,
-      password, // En producción: hashear con bcrypt
-      role, // Asignar rol
-      avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(fullName)}&background=3b82f6&color=fff`,
-      phone: '',
-      location: '',
-      birthDate: '',
-      joinDate: new Date().toISOString().split('T')[0], // Fecha actual
-      // Estadísticas iniciales en 0
-      completedProjects: 0,
-      volunteerHours: 0,
-      recognitions: 0,
-    };
-    
-    users.push(newUser);
-    localStorage.setItem('users', JSON.stringify(users));
-    
-    // Auto-login después de registro
-    const { password: _, ...userWithoutPassword } = newUser;
-    setUser(userWithoutPassword);
-    localStorage.setItem('currentUser', JSON.stringify(userWithoutPassword));
-    
-    return true;
   };
 
-  const logout = () => {
-    setUser(null);
-    localStorage.removeItem('currentUser');
-  };
-
-  const updateUser = (updates: Partial<User>) => {
-    if (!user) return;
-    
-    // Si se actualiza firstName o lastName, recalcular fullName
-    let finalUpdates = { ...updates };
-    if (updates.firstName || updates.lastName) {
-      const newFirstName = updates.firstName || user.firstName;
-      const newLastName = updates.lastName || user.lastName;
-      finalUpdates.fullName = `${newFirstName} ${newLastName}`;
+  const logout = async () => {
+    try {
+      await supabase.auth.signOut();
+      setUser(null);
+      setSession(null);
+    } catch (error) {
+      console.error('Logout error:', error);
     }
-    
-    const updatedUser = { ...user, ...finalUpdates };
-    setUser(updatedUser);
-    localStorage.setItem('currentUser', JSON.stringify(updatedUser));
-    
-    // Actualizar también en la lista de usuarios
-    const users = JSON.parse(localStorage.getItem('users') || '[]');
-    const userIndex = users.findIndex((u: any) => u.id === user.id);
-    if (userIndex !== -1) {
-      users[userIndex] = { ...users[userIndex], ...finalUpdates };
-      localStorage.setItem('users', JSON.stringify(users));
+  };
+
+  const updateUser = async (updates: Partial<User>) => {
+    if (!user) return;
+
+    try {
+      // Mapear campos de User a campos de la BD
+      const dbUpdates: any = {};
+      if (updates.firstName !== undefined) dbUpdates.first_name = updates.firstName;
+      if (updates.lastName !== undefined) dbUpdates.last_name = updates.lastName;
+      if (updates.phone !== undefined) dbUpdates.phone = updates.phone;
+      if (updates.location !== undefined) dbUpdates.location = updates.location;
+      if (updates.birthDate !== undefined) dbUpdates.birth_date = updates.birthDate;
+      if (updates.avatar !== undefined) dbUpdates.avatar_url = updates.avatar;
+
+      const { error } = await supabase
+        .from('profiles')
+        .update(dbUpdates)
+        .eq('id', user.id);
+
+      if (error) {
+        console.error('Update profile error:', error);
+        return;
+      }
+
+      // Actualizar estado local
+      let finalUpdates = { ...updates };
+      if (updates.firstName || updates.lastName) {
+        const newFirstName = updates.firstName || user.firstName;
+        const newLastName = updates.lastName || user.lastName;
+        finalUpdates.fullName = `${newFirstName} ${newLastName}`;
+      }
+
+      setUser(prev => prev ? { ...prev, ...finalUpdates } : null);
+    } catch (error) {
+      console.error('Update user exception:', error);
     }
   };
 
   return (
     <AuthContext.Provider value={{
       user,
+      session,
       isAuthenticated: !!user,
       isLoading,
       login,

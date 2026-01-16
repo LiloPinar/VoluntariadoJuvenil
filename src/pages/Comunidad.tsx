@@ -28,7 +28,9 @@ import {
   User as UserIcon,
   ChevronLeft,
   ChevronRight,
+  Loader2,
 } from "lucide-react";
+import { supabase } from '@/lib/supabase';
 
 interface User {
   id: string;
@@ -52,15 +54,51 @@ const Comunidad = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterRole, setFilterRole] = useState<string>('all');
   const [currentPage, setCurrentPage] = useState(1);
+  const [isLoading, setIsLoading] = useState(true);
   const usersPerPage = 6;
   const { t } = useLocale();
 
-  // Cargar usuarios desde localStorage
+  // Cargar usuarios desde Supabase
   useEffect(() => {
-    const savedUsers = localStorage.getItem('users');
-    if (savedUsers) {
-      setUsers(JSON.parse(savedUsers));
-    }
+    const loadUsers = async () => {
+      setIsLoading(true);
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .order('created_at', { ascending: false });
+
+        if (error) {
+          console.error('Error loading users:', error);
+          return;
+        }
+
+        // Transformar datos de Supabase al formato esperado
+        const transformedUsers: User[] = (data || []).map(profile => ({
+          id: profile.id,
+          firstName: profile.first_name || '',
+          lastName: profile.last_name || '',
+          fullName: `${profile.first_name || ''} ${profile.last_name || ''}`.trim(),
+          email: '', // El email está en auth.users, no en profiles (por seguridad no lo mostramos)
+          role: profile.role || 'volunteer',
+          avatar: profile.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(`${profile.first_name} ${profile.last_name}`)}&background=3b82f6&color=fff`,
+          phone: profile.phone || '',
+          location: profile.location || '',
+          joinDate: profile.created_at?.split('T')[0] || '',
+          completedProjects: 0,
+          volunteerHours: 0,
+          recognitions: 0,
+        }));
+
+        setUsers(transformedUsers);
+      } catch (error) {
+        console.error('Error in loadUsers:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadUsers();
   }, []);
 
   // Scroll al top cuando se carga la página
