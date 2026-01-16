@@ -10,6 +10,7 @@ import { EnrollmentDialog } from '@/components/EnrollmentDialog';
 import { EnrollmentStatusStepper } from '@/components/EnrollmentStatusStepper';
 import { ProjectActivities } from '@/components/ProjectActivities';
 import { WithdrawalDialog } from '@/components/WithdrawalDialog';
+import { ProjectFeedbackDialog } from '@/components/ProjectFeedbackDialog';
 import { useAuthContext } from '@/contexts/AuthContext';
 import { useProjectContext } from '@/contexts/ProjectContext';
 import { allProjects, getProjectTitle, getProjectDescription } from '@/data/projects';
@@ -24,6 +25,7 @@ import {
   AlertCircle,
   Info,
   LogOut,
+  Star,
 } from 'lucide-react';
 import {
   AlertDialog,
@@ -53,7 +55,7 @@ const DetalleProyecto = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { isAuthenticated, user } = useAuthContext();
-  const { isEnrolled: checkEnrolled, getEnrollmentStatus, enrolledProjects } = useProjectContext();
+  const { isEnrolled: checkEnrolled, getEnrollmentStatus, enrolledProjects, hasUserSubmittedFeedback } = useProjectContext();
   const { toast } = useToast();
   const { t, locale } = useLocale();
   
@@ -62,6 +64,7 @@ const DetalleProyecto = () => {
   const [showAuthDialog, setShowAuthDialog] = useState(false);
   const [showProfileIncompleteDialog, setShowProfileIncompleteDialog] = useState(false);
   const [showWithdrawalDialog, setShowWithdrawalDialog] = useState(false);
+  const [showFeedbackDialog, setShowFeedbackDialog] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   // Cargar proyectos desde localStorage o usar los predeterminados
@@ -438,6 +441,28 @@ const DetalleProyecto = () => {
                       </Button>
                     )}
                     
+                    {/* Botón de Evaluación - Solo si está inscrito, aprobado y no ha evaluado */}
+                    {isEnrolled && enrollmentStatus === 'approved' && user?.email && !hasUserSubmittedFeedback(projectId, user.email) && (
+                      <Button
+                        className="w-full text-sm sm:text-base h-10 sm:h-11 mt-2"
+                        onClick={() => setShowFeedbackDialog(true)}
+                        variant="outline"
+                      >
+                        <Star className="h-4 w-4 mr-2 fill-yellow-400 text-yellow-400" />
+                        Evaluar Experiencia
+                      </Button>
+                    )}
+                    
+                    {/* Mensaje de ya evaluado */}
+                    {isEnrolled && enrollmentStatus === 'approved' && user?.email && hasUserSubmittedFeedback(projectId, user.email) && (
+                      <div className="mt-2 p-3 rounded-lg bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-800 text-center">
+                        <div className="flex items-center justify-center gap-2 text-sm text-green-700 dark:text-green-300">
+                          <CheckCircle2 className="h-4 w-4" />
+                          <span>Ya has evaluado este proyecto</span>
+                        </div>
+                      </div>
+                    )}
+                    
                     {/* Mensaje cuando las inscripciones están cerradas */}
                     {!(project.isOpenForEnrollment ?? true) && !isEnrolled && (
                       <p className="text-xs text-center text-orange-600 dark:text-orange-400 mt-2">
@@ -471,6 +496,16 @@ const DetalleProyecto = () => {
         open={showWithdrawalDialog}
         onOpenChange={setShowWithdrawalDialog}
       />
+
+      {/* Diálogo de Evaluación/Feedback */}
+      {user?.email && (
+        <ProjectFeedbackDialog
+          open={showFeedbackDialog}
+          onOpenChange={setShowFeedbackDialog}
+          projectId={projectId}
+          projectTitle={getProjectTitle(project, locale)}
+        />
+      )}
 
       <AlertDialog open={showProfileIncompleteDialog} onOpenChange={setShowProfileIncompleteDialog}>
         <AlertDialogContent className="max-w-[90vw] sm:max-w-md">
